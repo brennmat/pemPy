@@ -22,7 +22,7 @@ from adafruit_ads1x15.analog_in import AnalogIn
 # parsing of input arguments #
 ##############################
 parser = argparse.ArgumentParser(description='Monitor current through PEM 3H enrichment cells and determine cumulative charge.')
-parser.add_argument('--datafile', nargs='?', help='name/path of file for output data')
+parser.add_argument('--datafile', nargs='?', help='data file (name/path)')
 args = parser.parse_args()
 if args.datafile is not None:
 	f = open(args.datafile,'w')
@@ -36,7 +36,7 @@ else:
 ####################
 
 def printit(text,f=''):
-	# print date/time followed by text either to stdout (if f is empty) or to file f (if f is empty)
+	# print date/time followed by text either to stdout (if f is empty) or to file (if f is not empty)
 
 	# prepend date/time:
 	now = datetime.datetime.now()
@@ -73,16 +73,13 @@ A  = -9.615	# conversion factor
 t0 = time.time();
 
 # number of readings per averageing step:
-N = 100
-
-# pause in between each reading (while averaging), in seconds:
-dt = 0.1
+N = 1000
 
 # total charge ('Ampere-hours'), in Coulomb:
 Q = 0.0
 
 # Say hello:
-printit('Monitoring cell current and total charge...',f)
+printit('Monitoring cell current and total charge',f)
 
 # Read Hall sensor, determine current and charge:
 while True:
