@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Monitor current applied to PEM cell, and determine charge (cumulative current)
 #
 # Setup: Raspberry Pi connected to Adafruit 1085 board (4-channel ADC, 16 bit)
@@ -7,11 +9,52 @@
 
 # See https://circuitpython.readthedocs.io/projects/ads1x15/en/latest/
 
+import argparse
+import datetime
 import time
 import board
 import busio
 import adafruit_ads1x15.ads1015 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
+
+
+##############################
+# parsing of input arguments #
+##############################
+parser = argparse.ArgumentParser(description='Monitor current through PEM 3H enrichment cells and determine cumulative charge.')
+parser.add_argument('--datafile', nargs='?', help='name/path of file for output data')
+args = parser.parse_args()
+if args.datafile is not None:
+	f = open(args.datafile,'w')
+	print('Saving output to file ' + args.datafile + '...')
+else:
+	f = None
+
+
+####################
+# helper functions #
+####################
+
+def printit(text,f=''):
+	# print date/time followed by text either to stdout (if f is empty) or to file f (if f is empty)
+
+	# prepend date/time:
+	now = datetime.datetime.now()
+	text = now.strftime("%Y-%m-%d %H:%M:%S") + '\t' + text
+
+	#print text:
+	if f:
+		print(text,file=f)
+		f.flush()
+	else:
+		print(text)
+	return
+
+
+################
+# Main program #
+################
+
 
 # Create the I2C bus
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -36,10 +79,10 @@ N = 100
 dt = 0.1
 
 # total charge ('Ampere-hours'), in Coulomb:
-Q = 0.0 
+Q = 0.0
 
 # Say hello:
-print('Monitoring cell current and total charge...')
+printit('Monitoring cell current and total charge...',f)
 
 # Read Hall sensor, determine current and charge:
 while True:
@@ -60,4 +103,4 @@ while True:
 	Q = Q + IC*(t2-t1)
 
 	# show data:
-	print("{:>.1f}...{:>.1f} s:\t I = {:>.2f} A\t Q = {:>.2E} C".format(t1-t0 , t2-t0 , IC , Q))
+	printit("{:>.1f}...{:>.1f} s:\t I = {:>.2f} A\t Q = {:>.2E} C".format(t1-t0 , t2-t0 , IC , Q),f)
