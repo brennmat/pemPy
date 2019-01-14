@@ -145,7 +145,4 @@ while True:
 	r = PSU.reading()
 
 	# show data:
-	printit("{:>.1f}...{:>.1f} s:\t U-PSU = {:>.2f} V\tI-PSU = {:>.2f} A\tI-hall = {:>.2f} A\t Q-hall = {:>.2E} C".format(t1-t0 , t2-t0 , r[0] , r[1] , Q IC),f)
-
-
-
+	printit("{:>.1f}...{:>.1f} s:\t U-PSU = {:>.2f} V\tI-PSU = {:>.2f} A\tI-hall = {:>.2f} A\t Q-hall = {:>.2E} Ah".format(t1-t0 , t2-t0 , r[0] , r[1] , IC, Q ),f)

@@ -66,9 +66,6 @@ class PPS(object):
         self._debug = bool(debug)
         try:
             model = self.limits()
-
-            print(model)
-
             self._MODEL = PPS_MODELS[model]
             self._VMAX = model[0]
             self._IMAX = model[1]
