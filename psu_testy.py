@@ -2,8 +2,6 @@
 
 # Python program for testing the pemPy code
 # 
-#
-# Copyright 2019, Matthias Brennwald (brennmat@gmail.com)
 # 
 # This file is part of pemPy, a toolbox for operation of PEM electrolysis cells.
 #
@@ -21,7 +19,7 @@
 # along with ruediPy.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # pemPy: a toolbox for operation of PEM electrolysis cells.
-# Copyright 20169, Matthias Brennwald (brennmat@gmail.com)
+# Copyright 2019, Matthias Brennwald (brennmat@gmail.com)
 
 # make shure Python knows where to look for the RUEDI Python code
 # http://stackoverflow.com/questions/4580101/python-add-pythonpath-during-command-line-module-run
