@@ -44,13 +44,13 @@ from adafruit_ads1x15.analog_in import AnalogIn
 
 
 # import pemPy classes:
-import classes.pps_powersupply
+### import classes.pps_powersupply
 
 # connect to PSU:
-PSU = classes.pps_powersupply.PPS(port='/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0', reset=False, prom=None)
+### PSU = classes.pps_powersupply.PPS(port='/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0', reset=False, prom=None)
 
 # make sure PSU is turned off:
-PSU.output(False)
+### PSU.output(False)
 
 
 
@@ -115,15 +115,15 @@ N = 1000
 Q = 0.0
 
 # set output voltage and current:
-printit('Turning on power supply',f)
-PSU.voltage(5.0)
-PSU.current(3.0)
-PSU.output(True)
+### printit('Turning on power supply',f)
+### PSU.voltage(5.0)
+### PSU.current(3.5)
+### PSU.output(True)
 
 # Say hello:
 printit('Monitoring cell current and total charge',f)
 
-# Read PSU voltage and current, Hall sensor, determine current and charge:
+# Read Hall sensor, determine current and charge:
 while True:
 	
 	# determine mean Hall sensor output (voltage):
@@ -142,7 +142,7 @@ while True:
 	Q = Q + IC*(t2-t1)/3600
 
 	# read current and voltage at PSU terminals:
-	r = PSU.reading()
+	### r = PSU.reading()
 
 	# show data:
-	printit("{:>.1f}...{:>.1f} s:\t U-PSU = {:>.2f} V\tI-PSU = {:>.2f} A\tI-hall = {:>.2f} A\t Q-hall = {:>.2E} Ah".format(t1-t0 , t2-t0 , r[0] , r[1] , IC, Q ),f)
+	printit("{:>.1f}...{:>.1f} s:\tI-hall = {:>.2f} A\t Q-hall = {:>.2E} Ah".format(t1-t0 , t2-t0 , IC, Q ),f)
