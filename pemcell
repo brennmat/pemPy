@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+
+# Program to control and monitor isotope enrichment runs with PEM cells
+#
+# Setup: Raspberry Pi connected to Voltcraft PPS power supply via USB cable (UART interface in PPS)
+#
+# This file is part of pemPy, a toolbox for operation of PEM electrolysis cells.
+#
+# pemPy is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# pemPy is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with ruediPy.  If not, see <http://www.gnu.org/licenses/>.
+# 
+# pemPy: a toolbox for operation of PEM electrolysis cells.
+# Copyright 2019, Matthias Brennwald (brennmat@gmail.com)
+
+# make shure Python knows where to look for the RUEDI Python code
+# http://stackoverflow.com/questions/4580101/python-add-pythonpath-during-command-line-module-run
+# Example (bash): export PYTHONPATH=~/pemPy
+
+# imports:
+import argparse
+import datetime
+import time
+import configparser
+import _thread
+from termcolor import colored
+import classes.pps_powersupply
+
+global wait_ENTER_msg
+wait_ENTER_msg = ''
+
+
+###########################################
+# thread function waiting for ENTER press #
+###########################################
+def wait_ENTER(b,msg):
+	global wait_ENTER_msg
+	wait_ENTER_msg = msg
+	input()
+	print(colored(wait_ENTER_msg,'red'))
+	b.append(None)
+
+
+
+############################
+# function to print output #
+############################
+
+def printit(text,f=''):
+	# print date/time followed by text either to stdout (if f is empty) or to file (if f is not empty)
+
+	# prepend date/time:
+	now = datetime.datetime.now()
+	text = now.strftime("%Y-%m-%d %H:%M:%S") + '\t' + text
+
+	#print text:
+	if f:
+		print(text,file=f)
+		f.flush()
+	print(text)
+	return
+
+
+################
+# main program #
+################
+
+# parse input arguments
+parser = argparse.ArgumentParser(description='Control and monitor H isotope enrichment of water samples with PEM cells')
+parser.add_argument('samplename', help='name/label of sample')
+parser.add_argument('configfile', help='configuration file (name/path)')
+parser.add_argument('--logfile', nargs='?', default='pemcell.log', help='log file (name/path). Default: pemcell.log')
+args = parser.parse_args()
+
+# read config file:
+config = configparser.ConfigParser()
+config.read(args.configfile)
+
+# connect to PSU:
+PSU = classes.pps_powersupply.PPS(port=config['PSU']['COMPORT'], reset=False, prom=None)
+
+# make sure PSU is turned off:
+PSU.output(False)
+
+# start logfile:
+logfile = open(args.logfile,'w')
+if logfile:
+	print('Logging output to ' + args.logfile + '...')
+else:
+	print('Could not open log file!')
+	exit()
+
+# print sample name:
+printit('Sample: ' + args.samplename,logfile)
+
+# parse and print cell config:
+I_min  = float(config['CELL']['MINCURRENT'])
+I_max  = float(config['CELL']['MAXCURRENT'])
+U_max  = float(config['CELL']['MAXVOLTAGE'])
+T_ramp = float(config['CELL']['RAMPTIME'])
+printit('Max. cell voltage = ' + str(U_max) + ' V',logfile)
+printit('Min. cell current = ' + str(I_min) + ' A',logfile)
+printit('Max. cell current = ' + str(I_max) + ' A',logfile)
+printit('Ramp time = ' + str(T_ramp/60) + ' min',logfile)
+
+# init variables:
+Q  = 0.0 # total charge in 'Ampere-hours'
+t0 = time.time() # start time
+t2 = t0
+I_last = I_min
+
+# set output voltage and current:
+printit('Starting electrolysis...',logfile)
+
+PSU.voltage(U_max)
+PSU.current(I_min)
+PSU.output(True)
+
+# Monitor current and voltage:
+do_doop = True
+BUTTON = []
+_thread.start_new_thread(wait_ENTER, (BUTTON,'Stopping electrolysis...'))
+
+
+while 1:
+
+	# pause between two readings:
+	t1 = t2
+	time.sleep(10)
+
+	# stop the loop if user pressed ENTER:
+	if BUTTON:
+		break
+
+	# read current and voltage at PSU terminals:
+	r = PSU.reading();
+
+	# voltage at PSU terminals:
+	UC = r[0];
+
+	# current from PSU
+	IC = r[1];
+
+	# cumulative current (charge, in Ah):
+	t2 = time.time()
+	Q = Q + IC*(t2-t1)/3600
+
+	# show data:
+	printit("{:>.1f}...{:>.1f} s:\t cell voltage: {:>.2f} V\tcell current: {:>.2f} A\ttotal charge: {:>.2E} Ah".format(t1-t0 , t2-t0 , UC, IC , Q ),logfile)
+
+	# calculate and set current limit:
+	if t2-t0 < T_ramp:
+		I = I_min + (I_max-I_min) * (t2-t0)/T_ramp;
+	else:
+		I = I_max
+
+	if I != I_last:
+		PSU.current(I)
+
+# turn off PSU:
+printit('Turning off power supply...',logfile)
+PSU.current(0.0)
+PSU.output(False)
+printit('Done.',logfile)
