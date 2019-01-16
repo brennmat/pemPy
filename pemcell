@@ -22,7 +22,7 @@
 # pemPy: a toolbox for operation of PEM electrolysis cells.
 # Copyright 2019, Matthias Brennwald (brennmat@gmail.com)
 
-# make shure Python knows where to look for the RUEDI Python code
+# make shure Python knows where to look for the pemPy Python code
 # http://stackoverflow.com/questions/4580101/python-add-pythonpath-during-command-line-module-run
 # Example (bash): export PYTHONPATH=~/pemPy
 
@@ -119,7 +119,7 @@ t2 = t0
 I_last = I_min
 
 # set output voltage and current:
-printit('Starting electrolysis...',logfile)
+printit('Starting electrolysis (press ENTER to stop)...',logfile)
 
 PSU.voltage(U_max)
 PSU.current(I_min)
