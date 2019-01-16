@@ -59,8 +59,8 @@ class PPS(object):
     reset: disable PS when connecting
     prom : choose preset values from internal PROM 0,1,2
     """
-    def __init__(self, port='/dev/ttyUSB0', reset=True, prom=None, debug=False):
-        self._Serial = serial.Serial(port, timeout=PPS_TIMEOUT)
+    def __init__(self, port='/dev/ttyUSB0', reset=True, prom=None, debug=False, exclusiveaccess=True):
+        self._Serial = serial.Serial(port, timeout=PPS_TIMEOUT, exclusive = exclusiveaccess)
         self._Serial.flushInput()
         self._Serial.flushOutput()
         self._debug = bool(debug)
