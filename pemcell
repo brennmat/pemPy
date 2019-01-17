@@ -46,7 +46,7 @@ def wait_ENTER(b,msg):
 	global wait_ENTER_msg
 	wait_ENTER_msg = msg
 	input()
-	print(colored(wait_ENTER_msg,'red'))
+	print(colored(wait_ENTER_msg+'\n','red'))
 	b.append(None)
 
 
@@ -94,7 +94,7 @@ PSU.output(False)
 # start logfile:
 logfile = open(args.logfile,'w')
 if logfile:
-	print('Logging output to ' + args.logfile + '...')
+	print('\nLogging output to ' + args.logfile + '...\n')
 else:
 	print('Could not open log file!')
 	exit()
@@ -116,9 +116,11 @@ printit('Ramp time = ' + str(T_ramp/60) + ' min',logfile)
 Q  = 0.0 # total charge in 'Ampere-hours'
 t0 = time.time() # start time
 t2 = t0
+I = I_min
 I_last = I_min
 
-# set output voltage and current:
+# start electrolysis (set output voltage and current):
+print('')
 printit('Starting electrolysis (press ENTER to stop)...',logfile)
 
 PSU.voltage(U_max)
@@ -130,44 +132,77 @@ do_doop = True
 BUTTON = []
 _thread.start_new_thread(wait_ENTER, (BUTTON,'Stopping electrolysis...'))
 
+do_process = True
+current_on = True
 
-while 1:
+while do_process:
 
-	# pause between two readings:
-	t1 = t2
-	time.sleep(10)
+	# while current is turned on (sample processing is not paused):
+	if current_on:
 
-	# stop the loop if user pressed ENTER:
-	if BUTTON:
-		break
+		# pause between two readings:
+		t1 = t2
+		time.sleep(10)
 
-	# read current and voltage at PSU terminals:
-	r = PSU.reading();
+		# stop the loop if user pressed ENTER:
+		if BUTTON:
+			current_on = False
 
-	# voltage at PSU terminals:
-	UC = r[0];
+		# read current and voltage at PSU terminals:
+		r = PSU.reading();
 
-	# current from PSU
-	IC = r[1];
+		# voltage at PSU terminals:
+		UC = r[0];
 
-	# cumulative current (charge, in Ah):
-	t2 = time.time()
-	Q = Q + IC*(t2-t1)/3600
+		# current from PSU
+		IC = r[1];
 
-	# show data:
-	printit("{:>.1f}...{:>.1f} s:\t cell voltage: {:>.2f} V\tcell current: {:>.2f} A\ttotal charge: {:>.2E} Ah".format(t1-t0 , t2-t0 , UC, IC , Q ),logfile)
+		# cumulative current (charge, in Ah):
+		t2 = time.time()
+		Q = Q + IC*(t2-t1)/3600
 
-	# calculate and set current limit:
-	if t2-t0 < T_ramp:
-		I = I_min + (I_max-I_min) * (t2-t0)/T_ramp;
+		# show data:
+		printit("{:>.1f}...{:>.1f} s:\t cell voltage: {:>.2f} V\tcell current: {:>.2f} A\ttotal charge: {:>.2E} Ah".format(t1-t0 , t2-t0 , UC, IC , Q ),logfile)
+
+		# calculate and set current limit:
+		if t2-t0 < T_ramp:
+			I = I_min + (I_max-I_min) * (t2-t0)/T_ramp;
+		else:
+			I = I_max
+
+		if I != I_last:
+			PSU.current(I)
+			I_last = I
+
+	# if processing is paused:
 	else:
-		I = I_max
+		
+		printit('Turning off power supply...',logfile)
 
-	if I != I_last:
-		PSU.current(I)
+		# turn off current at PSU:
+		PSU.current(0.0)
+
+		# ask user what to do next:
+		u = ''
+		print('')
+		while u not in ['X','C']:
+			u = input('Enter C to continue processing the sample or X to exit.').upper()
+		
+		print('')
+		if u == 'X':
+			do_process = False
+		else:
+			printit('Turning on power supply...',logfile)
+			PSU.current(I)
+			current_on = True
+			I_last = I
+			t2 = time.time()
+			BUTTON = []
+			_thread.start_new_thread(wait_ENTER, (BUTTON,'Stopping electrolysis...'))
+		
 
 # turn off PSU:
-printit('Turning off power supply...',logfile)
-PSU.current(0.0)
+# printit('Turning off power supply...',logfile)
+# PSU.current(0.0)
 PSU.output(False)
 printit('Done.',logfile)
