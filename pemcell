@@ -121,7 +121,7 @@ I_last = I_min
 
 # start electrolysis (set output voltage and current):
 print('')
-printit('Starting electrolysis (press ENTER to stop)...',logfile)
+printit('Starting electrolysis (press ENTER to pause)...',logfile)
 
 PSU.voltage(U_max)
 PSU.current(I_min)
@@ -186,7 +186,7 @@ while do_process:
 		u = ''
 		print('')
 		while u not in ['X','C']:
-			u = input('Enter C to continue processing the sample or X to exit.').upper()
+			u = input('Electrolysis paused. Enter C to continue processing the sample or X to exit.').upper()
 		
 		print('')
 		if u == 'X':
