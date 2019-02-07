@@ -10,7 +10,7 @@ import time
 import RPi.GPIO as GPIO
 
 
-class HX711:
+class HX711(object):
     """
     HX711 represents chip for reading load cells.
     """
@@ -115,14 +115,14 @@ class HX711:
         subtracting the weight of the packaging. Also known as tare.
 
         Args:
-            readings(int): Number of readings for mean. Allowed values 1..99
+            readings(int): Number of readings for mean. Allowed values 1..1000
 
         Raises:
-            ValueError: if readings are not in range 1..99
+            ValueError: if readings are not in range 1...1000
 
         Returns: True if error occured.
         """
-        if readings > 0 and readings < 100:
+        if readings > 0 and readings < 1001:
             result = self.get_raw_data_mean(readings)
             if result != False:
                 if (self._current_channel == 'A' and
@@ -150,7 +150,7 @@ class HX711:
                 return True
         else:
             raise ValueError('Parameter "readings" '
-                             'can be in range 1 up to 99. '
+                             'can be in range 1 up to 1000. '
                              'Received: {}'.format(readings))
 
     def set_offset(self, offset, channel='', gain_A=0):
