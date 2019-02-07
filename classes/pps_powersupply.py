@@ -1,11 +1,5 @@
 """
-voltcraft.pps submodule
-=======================
-
-	last change:		28.08.12
-
-	implemented functionality:  PPS-class
-
+Python class to control Voltcraft PPS power supplies
 """
 
 import serial
