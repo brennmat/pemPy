@@ -2,7 +2,9 @@
 
 # Program to control and monitor isotope enrichment runs with PEM cells
 #
-# Setup: Raspberry Pi connected to Voltcraft PPS power supply via USB cable (UART interface in PPS)
+# Setup: Raspberry Pi connected to...
+# ... Voltcraft PPS power supply via USB cable (UART interface in PPS)
+# ... HX711 load cell ADC to read PEM weight data from load cell
 #
 # This file is part of pemPy, a toolbox for operation of PEM electrolysis cells.
 #
@@ -34,6 +36,8 @@ import configparser
 import _thread
 from termcolor import colored
 import classes.pps_powersupply
+import RPi.GPIO as GPIO  # import GPIO
+import classes.hx711_loadcell
 
 global wait_ENTER_msg
 wait_ENTER_msg = ''
@@ -43,11 +47,11 @@ wait_ENTER_msg = ''
 # thread function waiting for ENTER press #
 ###########################################
 def wait_ENTER(b,msg):
-	global wait_ENTER_msg
-	wait_ENTER_msg = msg
-	input()
-	print(colored(wait_ENTER_msg+'\n','red'))
-	b.append(None)
+    global wait_ENTER_msg
+    wait_ENTER_msg = msg
+    input()
+    print(colored(wait_ENTER_msg+'\n','red'))
+    b.append(None)
 
 
 
@@ -56,18 +60,18 @@ def wait_ENTER(b,msg):
 ############################
 
 def printit(text,f=''):
-	# print date/time followed by text either to stdout (if f is empty) or to file (if f is not empty)
+    # print date/time followed by text either to stdout (if f is empty) or to file (if f is not empty)
 
-	# prepend date/time:
-	now = datetime.datetime.now()
-	text = now.strftime("%Y-%m-%d %H:%M:%S") + '\t' + text
+    # prepend date/time:
+    now = datetime.datetime.now()
+    text = now.strftime("%Y-%m-%d %H:%M:%S") + '\t' + text
 
-	#print text:
-	if f:
-		print(text,file=f)
-		f.flush()
-	print(text)
-	return
+    #print text:
+    if f:
+        print(text,file=f)
+        f.flush()
+    print(text)
+    return
 
 
 ################
@@ -86,27 +90,62 @@ config = configparser.ConfigParser()
 config.read(args.configfile)
 
 # connect to PSU:
-PSU = classes.pps_powersupply.PPS(port=config['PSU']['COMPORT'], reset=False, prom=None)
+PSU = classes.pps_powersupply.PPS(port=config['PEMCELLPSU']['COMPORT'], reset=False, prom=None)
 
 # make sure PSU is turned off:
 PSU.output(False)
 
+# connect to load cell ("weight sensor"):
+GPIO.setmode(GPIO.BCM)
+hx = classes.hx711_loadcell.HX711(dout_pin=int(config['LOADCELL']['DOUT_PIN']), pd_sck_pin=int(config['LOADCELL']['SCK_PIN']))
+loadcell_num_readings = int(config['LOADCELL']['READINGS_AVG'])
+
 # start logfile:
 logfile = open(args.logfile,'w')
 if logfile:
-	print('\nLogging output to ' + args.logfile + '...\n')
+    print('\nLogging output to ' + args.logfile + '...\n')
 else:
-	print('Could not open log file!')
-	exit()
+    print('Could not open log file!')
+    exit()
+
+# calibrate load cell (weight sensor):
+input('Put empty PEM cell on the load cell and press Enter')
+print('Zeroing load cell...')
+err = hx.zero(loadcell_num_readings)
+if err:
+    raise ValueError('Could not determine load cell zero.')
+
+reading = hx.get_raw_data_mean(num_readings)
+if reading:
+    print('Load cell zero value (raw value):',reading)
+else:
+        raise('Could not read load cell data', reading)
+
+calweight = input('Put calibration weight on PEM cell and enter weight (grams): ')
+try:
+    value = float(known_weight_grams)
+except ValueError:
+    print('Invalid input: ',calweight)
+reading = hx.get_data_mean(num_readings)
+if reading:
+    ratio = reading / value  # calculate the ratio for channel A and gain 128
+    hx.set_scale_ratio(ratio)  # set ratio for current channel
+    print('Load cell calibration completed.')
+else:
+        raise('Could not read load cell data', reading)
 
 # print sample name:
 printit('Sample: ' + args.samplename,logfile)
 
+# add sample water to PEM cell
+input('Pour sample water to PEM cell. Press ENTER when done.')
+print('Water amount added: ', hx.get_weight_mean(num_readings), 'g')
+
 # parse and print cell config:
-I_min  = float(config['CELL']['MINCURRENT'])
-I_max  = float(config['CELL']['MAXCURRENT'])
-U_max  = float(config['CELL']['MAXVOLTAGE'])
-T_ramp = float(config['CELL']['RAMPTIME'])
+I_min  = float(config['PEMCELLPSU']['MINCURRENT'])
+I_max  = float(config['PEMCELLPSU']['MAXCURRENT'])
+U_max  = float(config['PEMCELLPSU']['MAXVOLTAGE'])
+T_ramp = float(config['PEMCELLPSU']['RAMPTIME'])
 printit('Max. cell voltage = ' + str(U_max) + ' V',logfile)
 printit('Min. cell current = ' + str(I_min) + ' A',logfile)
 printit('Max. cell current = ' + str(I_max) + ' A',logfile)
@@ -137,72 +176,73 @@ current_on = True
 
 while do_process:
 
-	# while current is turned on (sample processing is not paused):
-	if current_on:
+    # while current is turned on (sample processing is not paused):
+    if current_on:
 
-		# pause between two readings:
-		t1 = t2
-		time.sleep(10)
+        # pause between two readings:
+        t1 = t2
+        time.sleep(10)
 
-		# stop the loop if user pressed ENTER:
-		if BUTTON:
-			current_on = False
+        # stop the loop if user pressed ENTER:
+        if BUTTON:
+            current_on = False
 
-		# read current and voltage at PSU terminals:
-		r = PSU.reading();
+        # read current and voltage at PSU terminals:
+        r = PSU.reading();
 
-		# voltage at PSU terminals:
-		UC = r[0];
+        # voltage at PSU terminals:
+        UC = r[0];
 
-		# current from PSU
-		IC = r[1];
+        # current from PSU
+        IC = r[1];
 
-		# cumulative current (charge, in Ah):
-		t2 = time.time()
-		Q = Q + IC*(t2-t1)/3600
+        # cumulative current (charge, in Ah):
+        t2 = time.time()
+        Q = Q + IC*(t2-t1)/3600
 
-		# show data:
-		printit("{:>.1f}...{:>.1f} s:\t cell voltage: {:>.2f} V\tcell current: {:>.2f} A\ttotal charge: {:>.2E} Ah".format(t1-t0 , t2-t0 , UC, IC , Q ),logfile)
+        # show data:
+        printit("{:>.1f}...{:>.1f} s:\t cell voltage: {:>.2f} V\tcell current: {:>.2f} A\ttotal charge: {:>.2E} Ah".format(t1-t0 , t2-t0 , UC, IC , Q ),logfile)
 
-		# calculate and set current limit:
-		if t2-t0 < T_ramp:
-			I = I_min + (I_max-I_min) * (t2-t0)/T_ramp;
-		else:
-			I = I_max
+        # calculate and set current limit:
+        if t2-t0 < T_ramp:
+            I = I_min + (I_max-I_min) * (t2-t0)/T_ramp;
+        else:
+            I = I_max
 
-		if I != I_last:
-			PSU.current(I)
-			I_last = I
+        if I != I_last:
+            PSU.current(I)
+            I_last = I
 
-	# if processing is paused:
-	else:
-		
-		printit('Turning off power supply...',logfile)
+    # if processing is paused:
+    else:
+        
+        printit('Turning off power supply...',logfile)
 
-		# turn off current at PSU:
-		PSU.current(0.0)
+        # turn off current at PSU:
+        PSU.current(0.0)
 
-		# ask user what to do next:
-		u = ''
-		print('')
-		while u not in ['X','C']:
-			u = input('Electrolysis paused. Enter C to continue processing the sample or X to exit.').upper()
-		
-		print('')
-		if u == 'X':
-			do_process = False
-		else:
-			printit('Turning on power supply...',logfile)
-			PSU.current(I)
-			current_on = True
-			I_last = I
-			t2 = time.time()
-			BUTTON = []
-			_thread.start_new_thread(wait_ENTER, (BUTTON,'Stopping electrolysis...'))
-		
+        # ask user what to do next:
+        u = ''
+        print('')
+        while u not in ['X','C']:
+            u = input('Electrolysis paused. Enter C to continue processing the sample or X to exit.').upper()
+        
+        print('')
+        if u == 'X':
+            do_process = False
+        else:
+            printit('Turning on power supply...',logfile)
+            PSU.current(I)
+            current_on = True
+            I_last = I
+            t2 = time.time()
+            BUTTON = []
+            _thread.start_new_thread(wait_ENTER, (BUTTON,'Stopping electrolysis...'))
+
 
 # turn off PSU:
 # printit('Turning off power supply...',logfile)
 # PSU.current(0.0)
 PSU.output(False)
+GPIO.cleanup()
 printit('Done.',logfile)
