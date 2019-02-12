@@ -6,32 +6,52 @@ cloned from https://github.com/gandalf15/HX711 on 7 Feb 2019
 
 import statistics as stat
 import time
-
 import RPi.GPIO as GPIO
-
+from termcolor import colored
 
 class HX711(object):
     """
-    HX711 represents chip for reading load cells.
+    Class for operation of load cells using HX711 chip.
+    The loadcell readings from the HX711 can be compensated for temperature drift of the loadcell using a DS18B20 temperature sensor connected to a serial port (optional).
+    Temperature compensation works as described in get_weight_mean_compensated.
+
+    INPUT:
+    dout_pin: GPIO pin at Raspberry Pi used for DOUT of HX711
+    pd_sck_pin: GPIO pin at Raspberry Pi used for SCK of HX711
+    gain_channel_A: gain setting for input channel A of HX711 (64 or 128, default: 128)
+    select_channel: HX711 input channel used to read the load cell (A or B, default: A)
+    tempsens_serialport (optional): serial port of the temperature sensor (Maxim DS18B20) used for temperature compensation of the load cell reading. If tempsens_serialport is empty, the readings will be left uncompensated. Default: empty.
+    TZero and TRatio: coefficients used for temperature compensation
+
+    OUTPUT:
+    (none)
     """
 
     def __init__(self,
                  dout_pin,
                  pd_sck_pin,
                  gain_channel_A=128,
-                 select_channel='A'):
+                 select_channel='A',
+                 tempsens_serialport='',
+                 TZero=[1.0,0.0],
+                 TRatio=1.0):
         """
-        Init a new instance of HX711
+        Init a new instance of load cell (HX711+DS18B20)
 
-        Args:
-            dout_pin(int): Raspberry Pi pin number where the Data pin of HX711 is connected.
-            pd_sck_pin(int): Raspberry Pi pin number where the Clock pin of HX711 is connected.
-            gain_channel_A(int): Optional, by default value 128. Options (128 || 64)
-            select_channel(str): Optional, by default 'A'. Options ('A' || 'B')
+        INPUT:
+        dout_pin: GPIO pin at Raspberry Pi used for DOUT of HX711
+        pd_sck_pin: GPIO pin at Raspberry Pi used for SCK of HX711
+        gain_channel_A: gain setting for input channel A of HX711 (64 or 128, default: 128)
+        select_channel: HX711 input channel used to read the load cell (A or B, default: A)
+        tempsens_serialport (optional): serial port of the temperature sensor (Maxim DS18B20) used for temperature compensation of the load cell reading. If tempsens_serialport is empty, the r$
+        TZero and TRatio: coefficients used for temperature compensation
 
-        Raises:
-            TypeError: if pd_sck_pin or dout_pin are not int type
+        OUTPUT:
+        (none)
         """
+
+
+        # set up HX711 load cell sensor:
         if (isinstance(dout_pin, int)):
             if (isinstance(pd_sck_pin, int)):
                 self._pd_sck = pd_sck_pin
@@ -62,6 +82,107 @@ class HX711(object):
         GPIO.setup(self._dout, GPIO.IN)  # pin _dout is input only
         self.select_channel(select_channel)
         self.set_gain_A(gain_channel_A)
+
+        # set up DS18B20 temperature sensor (optional):
+        self._T0 = []
+        self._TZero = TZero
+        self._TRatio = TRatio
+        if tempsens_serialport:
+            from digitemp.master import UART_Adapter
+            from digitemp.device import AddressableDevice
+            from digitemp.device import DS18B20
+
+            r = AddressableDevice(UART_Adapter(tempsens_serialport)).get_connected_ROMs()
+            if r is None:
+                print ('Couldn not find any 1-wire devices on ' + serialport)
+            else:
+                    bus = UART_Adapter(tempsens_serialport)
+                    if len(r) == 1:
+                        self._T_sensor = DS18B20(bus)
+                        self._T_ROMcode = r[0]
+                    else:
+                        print ('Too many 1-wire devices to choose from! Try again with specific ROM code...')
+                        for i in range(1,len(r)):
+                            print ('Device ' + i + ' ROM code: ' + r[i-1] +'\n')
+            if hasattr(self,'_T_sensor'):
+                print ('Successfully configured DS18B20 temperature sensor (ROM code ' + self._T_ROMcode + ')' )
+            else:
+                self.warning('Could not initialize MAXIM DS1820 temperature sensor.')
+
+
+    def warning(self,msg):
+        '''
+        Issue warning about issues related to operation of load cell.
+
+        INPUT:
+        msg: warning message (string)
+
+        OUTPUT:
+        (none)
+        '''
+
+        print ('\a') # get user attention using the terminal bell
+        M = '***** WARNING from loadcell: ' + msg + '\n'
+        print (colored(M,'red'))
+
+
+    def get_temperature(self):
+        """
+        temp,unit = temperaturesensor_MAXIM.get_temperature()
+
+        Read out current temperature value.
+
+        INPUT:
+        (none)
+
+        OUTPUT:
+        temp: temperature value in deg. C (float)
+        """
+
+        try:
+            temp = float(self._T_sensor.get_temperature())
+        except:
+            self.warning('Could not read temperature sensor.')
+            temp = []
+        return temp
+
+
+    def set_reference_temperature(self,T0=[]):
+        """
+        temperaturesensor_MAXIM.set_reference_temperature(T0)
+
+        Set reference temperature (T0) used for temperature compensation (set get_weight_mean_comp).
+
+        INPUT:
+        T0: reference temperature (deg.C). If T0 = [], the current temperature of the cell is used. Default: T0 = [].
+
+        OUTPUT:
+        (none)
+        """
+
+        if not T0:
+            T0 = self.get_temperature()
+        self._T0 = T0
+
+
+    def get_reference_temperature(self):
+        """
+        T0 = self.get_reference_temperature()
+
+        Return reference temperature (T0) used for temperature compensation.
+
+        INPUT:
+        (none)
+
+        OUTPUT:
+        T0: reference temperature (deg.C). If T0 = [], the current temperature $
+        """
+
+        T0 = float(self._T0)
+        if not T0:
+            self.warning('Reference temperature not set.')
+        return T0
+
 
     def select_channel(self, channel):
         """
@@ -476,6 +597,45 @@ class HX711(object):
                 return result - self._offset_B
         else:
             return False
+
+
+    def get_weight_mean_compensated(self, readings=30):
+        """
+        Mcomp,Mraw,DT = get_weight_mean_compensated(readings)
+
+        Like get_weight_mean, but also applies temperature compensation if temperature sensor is configured and if reference temperature (T0) is set.
+        The procedure is:
+          (1) read weight (Mraw) from load cell using self.get_weight_mean (not compensated)
+          (2) read temperature (T) of load cell using self.temperature()
+          (3) determine temperature offset DT=T-T0 relative to loadcell temperature during last calibration of tare and ratio (T0)
+          (4) calculate compensated weight as follows: Mcomp = TRatio x ( M + DT^TZero[0] x TZero[1] )
+
+        INPUT:
+        (see get_weight_mean)
+
+        OUTPUT:
+        Mcomp: temperature compensated weight reading
+        Mraw: uncomensated weight reading (from self.get_weight_mean)
+        DT: temperature offset relative to reference temperature T0
+        """
+
+        # get uncompensated weight reading:
+        Mraw = self.get_weight_mean(readings)
+
+        # apply temperature compensation
+        try:
+            DT  = self.get_temperature() - self.get_reference_temperature()
+            if DT < 0:
+                Mcomp = self._TRatio * ( Mraw - (-DT)**self._TZero[0] * self._TZero[1] )
+            else:
+                Mcomp = self._TRatio * ( Mraw + (DT)**self._TZero[0] * self._TZero[1] )
+        except:
+            self.warning('Could not apply temperature compensation!')
+            Mcomp = Mraw
+            DT = 0.0
+
+        return Mcomp,Mraw,DT
+
 
     def get_weight_mean(self, readings=30):
         """
