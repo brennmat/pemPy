@@ -34,7 +34,7 @@ class HX711(object):
                  select_channel='A',
                  tempsens_serialport='',
                  TZero=[1.0,0.0],
-                 TRatio=1.0):
+                 TRatio=0.0):
         """
         Init a new instance of load cell (HX711+DS18B20)
 
@@ -44,7 +44,7 @@ class HX711(object):
         gain_channel_A: gain setting for input channel A of HX711 (64 or 128, default: 128)
         select_channel: HX711 input channel used to read the load cell (A or B, default: A)
         tempsens_serialport (optional): serial port of the temperature sensor (Maxim DS18B20) used for temperature compensation of the load cell reading. If tempsens_serialport is empty, the r$
-        TZero and TRatio: coefficients used for temperature compensation
+        TZero and TRatio: coefficients used for temperature compensation (default: TZero=[1.0,0.0] and TRatio=0.0)
 
         OUTPUT:
         (none)
@@ -608,7 +608,7 @@ class HX711(object):
           (1) read weight (Mraw) from load cell using self.get_weight_mean (not compensated)
           (2) read temperature (T) of load cell using self.temperature()
           (3) determine temperature offset DT=T-T0 relative to loadcell temperature during last calibration of tare and ratio (T0)
-          (4) calculate compensated weight as follows: Mcomp = TRatio x ( M + DT^TZero[0] x TZero[1] )
+          (4) calculate compensated weight as follows: Mcomp = (1 + DT*TRatio) x ( M + DT^TZero[0] x TZero[1] )
 
         INPUT:
         (see get_weight_mean)
@@ -626,9 +626,9 @@ class HX711(object):
         try:
             DT  = self.get_temperature() - self.get_reference_temperature()
             if DT < 0:
-                Mcomp = self._TRatio * ( Mraw - (-DT)**self._TZero[0] * self._TZero[1] )
+                Mcomp = (1 + DT*self._TRatio) * ( Mraw - (-DT)**self._TZero[0] * self._TZero[1] )
             else:
-                Mcomp = self._TRatio * ( Mraw + (DT)**self._TZero[0] * self._TZero[1] )
+                Mcomp = (1 + DT*self._TRatio)  * ( Mraw + (DT)**self._TZero[0] * self._TZero[1] )
         except:
             self.warning('Could not apply temperature compensation!')
             Mcomp = Mraw

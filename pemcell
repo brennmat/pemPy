@@ -147,7 +147,7 @@ printit('Sample: ' + args.samplename,logfile)
 # add sample water to PEM cell
 input('Pour sample water to PEM cell. Press ENTER when done.')
 MW0 = LOADCELL.get_weight_mean(loadcell_num_readings)
-printit('Water amount added = %.1f g\' % MW0,logfile)
+printit('Water amount added = %.1f g\n' % MW0,logfile)
 
 # parse and print cell config:
 MW_target = float(config['LOADCELL']['WATER_TARGET'])

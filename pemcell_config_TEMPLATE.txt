@@ -9,3 +9,6 @@ RAMPTIME   = 360
 READINGS_AVG = 500
 DOUT_PIN = 5
 SCK_PIN = 6
+TSENS_SERIALPORT = /dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller-if00-port0
+TEMP_ZEROCOMP = [1.18,2.11]
+WATER_TARGET = 20.0
