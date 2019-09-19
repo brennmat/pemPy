@@ -167,6 +167,7 @@ t0 = time.time() # start time
 t2 = t0
 I = I_min
 I_last = I_min
+tt = 0; # processing time (not including pause time)
 
 # start electrolysis (set output voltage and current):
 print('')
@@ -206,15 +207,43 @@ while do_process:
         # current from PSU
         IC = r[1];
 
-        # cumulative current (charge, in Ah):
-        t2 = time.time()
-        Q = Q + IC*(t2-t1)/3600
-
         # water amount left:
         MW = LOADCELL.get_weight_mean(loadcell_num_readings)
 
+	# timing:
+        t2 = time.time()
+	tt = tt + t2-t1; # add to processing time
+
+        # cumulative current (charge, in Ah):
+        Q = Q + IC*(t2-t1)/3600
+
+	# estimate processing time left:
+	if MW < MW0:
+		rate = (MW0-MW) / tt		# rate of H2O removal from cell (g/s)
+		tl = (MW-MW_target) / rate	# time left to arrive at target mass (in seconds)
+		if tl > 3600*24:
+			# days
+			tl = tl / 3600 / 24
+			tl_unit = 'd'
+		elif tl > 3600:
+			# hours
+			tl = tl / 3600
+			tl_unit = 'h'
+		elif tl > 60:
+			# minutes
+			tl = tl / 60
+			tl_unit = 'min'
+		else:
+			# seconds
+			tl_unit = 's'
+
+	else:
+		# MW is >= MW0 (for instance due to noisy readings at the beginning of the process)
+		tl = float('nan');
+		tl_unit = '?'
+	
         # show data:
-        printit("{:>.1f}...{:>.1f} s:\t cell voltage: {:>.2f} V\tcell current: {:>.2f} A\ttotal charge: {:>.2E} Ah\tWater left: {:>.1f} g ({:>.1f}%)".format(t1-t0 , t2-t0 , UC, IC , Q, MW , MW/MW0*100),logfile)
+        printit("{:>.1f}...{:>.1f} s:\t cell voltage: {:>.2f} V\tcell current: {:>.2f} A\ttotal charge: {:>.2E} Ah\tWater left: {:>.1f} g ({:>.1f}%)\tTime left: {:>.2f} {}".format(t1-t0 , t2-t0 , UC, IC , Q, MW , MW/MW0*100, tl , tl_unit),logfile)
 
         if MW <= MW_target:
             current_on = 0
