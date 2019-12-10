@@ -79,17 +79,16 @@ def printit(text,f=''):
 # main program #
 ################
 
-### # parse input arguments
-### parser = argparse.ArgumentParser(description='Control and monitor H isotope enrichment of water samples with PEM cells')
-### parser.add_argument('samplename', help='name/label of sample')
-### parser.add_argument('configfile', help='configuration file (name/path)')
-### parser.add_argument('--logfile', nargs='?', default='pemcell.log', help='log file (name/path). Default: pemcell.log')
-### args = parser.parse_args()
+# parse input arguments
+parser = argparse.ArgumentParser(description='Control and monitor H isotope enrichment of water samples with PEM cells')
+parser.add_argument('samplename', help='name/label of sample')
+parser.add_argument('configfile', help='configuration file (name/path)')
+parser.add_argument('--logfile', nargs='?', default='pemcell.log', help='log file (name/path). Default: pemcell.log')
+args = parser.parse_args()
 
 # read config file:
 config = configparser.ConfigParser()
-### config.read(args.configfile)
-config.read('pemcell_config.txt')
+config.read(args.configfile)
 
 # connect to PSU:
 PSU = classes.powersupply_PPS.PPS(port=config['PEMCELLPSU']['COMPORT'], reset=False, prom=None)
@@ -107,69 +106,48 @@ LOADCELL = classes.loadcell_HX711.HX711( dout_pin=5,
                                              TRatio = 1.0
                                            )
 
-# ask for sample name:
-samplename = ''
-while not samplename:
-    samplename = input('Enter sample name / label: ')
-    samplename = samplename.strip()
-
 # start logfile:
-logfile = 'pemcell_' + samplename + '.log'
-### logfile = open(args.logfile,'w')
-logfile = open(logfile,'w')
+logfile = open(args.logfile,'w')
 if logfile:
-    ### print('\nLogging output to ' + args.logfile + '...\n')
-    print('\nLogging output to ' + logfile + '...\n')
+    print('\nLogging output to ' + args.logfile + '...\n')
 else:
     print('Could not open log file!')
     exit()
 
-# print sample name:
-printit('Sample: ' + samplename,logfile)
-
-# Calibrate load cell ZERO:
-input('Remove PEM cell from the load cell and press Enter')
+# calibrate load cell (weight sensor):
+input('Put empty PEM cell on the load cell and press Enter')
 print('Zeroing load cell...')
 err = LOADCELL.zero(loadcell_num_readings)
 if err:
     raise ValueError('Could not determine load cell zero.')
+
 reading = LOADCELL.get_raw_data_mean(loadcell_num_readings)
 if reading:
     print('Load cell zero value (raw value):',reading)
 else:
-    raise ValueError('Could not read load cell data')
-except ValueError as err:
-    print('Could not determine load cell ZERO: ',err)
-    exit()
+    raise('Could not read load cell data', reading)
 
-# Calibrate load cell SENSITIVITY:
+calweight = input('Put calibration weight on PEM cell and enter weight (grams): ')
 try:
-    M_FULL = float(input('Put full PEM cell and enter weight (grams): '))
-if M_FULL < 0.0:
-    raise ValueError('Full weight must not be negative')
+    value = float(calweight)
 except ValueError:
-    print('Invalid input: ',M_FULL)
-    exit()
+    print('Invalid input: ',calweight)
 reading = LOADCELL.get_data_mean(loadcell_num_readings)
 if reading:
-    ratio = reading / M_FULL  # calculate the ratio for channel A and gain 128
+    ratio = reading / value  # calculate the ratio for channel A and gain 128
     print ('calibrated ratio = ' + str(ratio) + ' g/raw-units')
     LOADCELL.set_scale_ratio(ratio)  # set ratio for current channel
     print('Load cell calibration completed.')
 else:
-    raise ValueError('Could not read load cell data')
-except ValueError as err:
-    print('Could not determine load cell SENSITIVITY: ',err)
-    exit()
+    raise('Could not read load cell data', reading)
 
-# ask user for amount of sample water in PEM cell:
-try:
-    MW_ini = float(input('Enter amount of water in PEM cell (grams): '))
-if MW_ini <= 0.0
-    raise ValueError('water weight must be positive')
-except ValueError:
-    print('Invalid input: ',MW_ini)
-    exit()
+# print sample name:
+printit('Sample: ' + args.samplename,logfile)
+
+# add sample water to PEM cell
+input('Pour sample water to PEM cell. Press ENTER when done.')
+MW0 = LOADCELL.get_weight_mean(loadcell_num_readings)
+printit('Water amount added = %.1f g\n' % MW0,logfile)
 
 # parse and print cell config:
 MW_target = float(config['LOADCELL']['WATER_TARGET'])
@@ -181,7 +159,6 @@ printit('Max. cell voltage = ' + str(U_max) + ' V',logfile)
 printit('Min. cell current = ' + str(I_min) + ' A',logfile)
 printit('Max. cell current = ' + str(I_max) + ' A',logfile)
 printit('Ramp time = ' + str(T_ramp/60) + ' min',logfile)
-printit('Processing start = %.1f g of water' % MW_ini ,logfile)
 printit('Processing target = %.1f g of water' % MW_target ,logfile)
 
 # init variables:
@@ -195,6 +172,7 @@ tt = 0; # processing time (not including pause time)
 # start electrolysis (set output voltage and current):
 print('')
 printit('Starting electrolysis (press ENTER to pause)...',logfile)
+
 PSU.voltage(U_max)
 PSU.current(I_min)
 PSU.output(True)
@@ -230,7 +208,7 @@ while do_process:
         IC = r[1];
 
         # water amount left:
-        MW = MW_ini - (M_FULL - LOADCELL.get_weight_mean(loadcell_num_readings))
+        MW = LOADCELL.get_weight_mean(loadcell_num_readings)
 
 	# timing:
         t2 = time.time()
@@ -240,8 +218,8 @@ while do_process:
         Q = Q + IC*(t2-t1)/3600
 
 	# estimate processing time left:
-        if MW < MW_ini:
-                rate = (MW_ini-MW) / tt		# rate of H2O removal from cell (g/s)
+        if MW < MW0:
+                rate = (MW0-MW) / tt		# rate of H2O removal from cell (g/s)
                 tl = (MW-MW_target) / rate	# time left to arrive at target mass (in seconds)
                 if tl > 3600*24:
                 	# days
@@ -260,17 +238,18 @@ while do_process:
                 	tl_unit = 's'
 
         else:
-                # MW is >= MW_ini (for instance due to noisy readings at the beginning of the process)
+                # MW is >= MW0 (for instance due to noisy readings at the beginning of the process)
                 tl = float('nan');
                 tl_unit = '?'
 	
         # show data:
-        printit("{:>.1f}...{:>.1f} s:\t cell voltage: {:>.2f} V\tcell current: {:>.2f} A\ttotal charge: {:>.2E} Ah\tWater left: {:>.1f} g ({:>.1f}%)\tTime left: {:>.2f} {}".format(t1-t0 , t2-t0 , UC, IC , Q, MW , MW/MW_ini*100, tl , tl_unit),logfile)
+        printit("{:>.1f}...{:>.1f} s:\t cell voltage: {:>.2f} V\tcell current: {:>.2f} A\ttotal charge: {:>.2E} Ah\tWater left: {:>.1f} g ({:>.1f}%)\tTime left: {:>.2f} {}".format(t1-t0 , t2-t0 , UC, IC , Q, MW , MW/MW0*100, tl , tl_unit),logfile)
 
         if MW <= MW_target:
             current_on = 0
             printit ('*** Water mass target reached! Press ENTER...',logfile)
             wait_ENTER_msg = ''
+
 
         # calculate and set current limit:
         if t2-t0 < T_ramp:
