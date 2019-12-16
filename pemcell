@@ -114,12 +114,13 @@ while not samplename:
     samplename = samplename.strip()
 
 # start logfile:
-logfile = 'pemcell_' + samplename + '.log'
+logfilename = 'pemcell_' + samplename + '.log'
 ### logfile = open(args.logfile,'w')
-logfile = open(logfile,'w')
+
+logfile = open(logfilename,'w')
 if logfile:
     ### print('\nLogging output to ' + args.logfile + '...\n')
-    print('\nLogging output to ' + logfile + '...\n')
+    print('\nLogging output to ' + logfilename + '...\n')
 else:
     print('Could not open log file!')
     exit()
@@ -130,14 +131,15 @@ printit('Sample: ' + samplename,logfile)
 # Calibrate load cell ZERO:
 input('Remove PEM cell from the load cell and press Enter')
 print('Zeroing load cell...')
-err = LOADCELL.zero(loadcell_num_readings)
-if err:
-    raise ValueError('Could not determine load cell zero.')
-reading = LOADCELL.get_raw_data_mean(loadcell_num_readings)
-if reading:
-    print('Load cell zero value (raw value):',reading)
-else:
-    raise ValueError('Could not read load cell data')
+try:
+    err = LOADCELL.zero(loadcell_num_readings)
+    if err:
+        raise ValueError(err)
+    reading = LOADCELL.get_raw_data_mean(loadcell_num_readings)
+    if reading:
+        print('Load cell zero value (raw value):',reading)
+    else:
+        raise ValueError('empty reading')
 except ValueError as err:
     print('Could not determine load cell ZERO: ',err)
     exit()
@@ -145,19 +147,21 @@ except ValueError as err:
 # Calibrate load cell SENSITIVITY:
 try:
     M_FULL = float(input('Put full PEM cell and enter weight (grams): '))
-if M_FULL < 0.0:
-    raise ValueError('Full weight must not be negative')
+    if M_FULL < 0.0:
+         raise ValueError('Full weight must not be negative')
 except ValueError:
     print('Invalid input: ',M_FULL)
     exit()
-reading = LOADCELL.get_data_mean(loadcell_num_readings)
-if reading:
-    ratio = reading / M_FULL  # calculate the ratio for channel A and gain 128
-    print ('calibrated ratio = ' + str(ratio) + ' g/raw-units')
-    LOADCELL.set_scale_ratio(ratio)  # set ratio for current channel
-    print('Load cell calibration completed.')
-else:
-    raise ValueError('Could not read load cell data')
+
+try:
+    reading = LOADCELL.get_data_mean(loadcell_num_readings)
+    if reading:
+        ratio = reading / M_FULL  # calculate the ratio for channel A and gain 128
+        print ('calibrated ratio = ' + str(ratio) + ' g/raw-units')
+        LOADCELL.set_scale_ratio(ratio)  # set ratio for current channel
+        print('Load cell calibration completed.')
+    else:
+        raise ValueError('Could not read load cell data')
 except ValueError as err:
     print('Could not determine load cell SENSITIVITY: ',err)
     exit()
@@ -165,10 +169,10 @@ except ValueError as err:
 # ask user for amount of sample water in PEM cell:
 try:
     MW_ini = float(input('Enter amount of water in PEM cell (grams): '))
-if MW_ini <= 0.0
-    raise ValueError('water weight must be positive')
-except ValueError:
-    print('Invalid input: ',MW_ini)
+    if MW_ini <= 0.0:
+        raise ValueError('water weight must be positive')
+except ValueError as err:
+    print('Invalid input: ',err)
     exit()
 
 # parse and print cell config:
