@@ -146,17 +146,17 @@ except ValueError as err:
 
 # Calibrate load cell SENSITIVITY:
 try:
-    M_FULL = float(input('Put full PEM cell and enter weight (grams): '))
-    if M_FULL < 0.0:
+    M_CAL = float(input('Put full PEM cell without connecting the wires and enter weight (grams): '))
+    if M_CAL < 0.0:
          raise ValueError('Full weight must not be negative')
 except ValueError:
-    print('Invalid input: ',M_FULL)
+    print('Invalid input: ',M_CAL)
     exit()
 
 try:
     reading = LOADCELL.get_data_mean(loadcell_num_readings)
     if reading:
-        ratio = reading / M_FULL  # calculate the ratio for channel A and gain 128
+        ratio = reading / M_CAL  # calculate the ratio for channel A and gain 128
         print ('calibrated ratio = ' + str(ratio) + ' g/raw-units')
         LOADCELL.set_scale_ratio(ratio)  # set ratio for current channel
         print('Load cell calibration completed.')
@@ -164,6 +164,18 @@ try:
         raise ValueError('Could not read load cell data')
 except ValueError as err:
     print('Could not determine load cell SENSITIVITY: ',err)
+    exit()
+
+# ask user to attach wires to the PSUs (which will take off some of the weight/load):
+input('Attach wires from PEM and cooler top to power supplies, then press ENTER!')
+try:
+    M_FULL = LOADCELL.get_weight_mean(loadcell_num_readings)
+    if M_FULL:
+        print ('Full weight with wires connected = ' + str(M_FULL) + ' g')
+    else:
+        raise ValueError('could not read load cell')
+except ValueError as err:
+    print('Could not determine full weight with PSU wires connected: ',err)
     exit()
 
 # ask user for amount of sample water in PEM cell:
@@ -187,6 +199,9 @@ printit('Max. cell current = ' + str(I_max) + ' A',logfile)
 printit('Ramp time = ' + str(T_ramp/60) + ' min',logfile)
 printit('Processing start = %.1f g of water' % MW_ini ,logfile)
 printit('Processing target = %.1f g of water' % MW_target ,logfile)
+
+# ask if ready for electrolysis run:
+input('Ready for electrolysis? Press ENTER to start or CTRL-C to abort...')
 
 # init variables:
 Q  = 0.0 # total charge in 'Ampere-hours'
