@@ -633,7 +633,8 @@ class HX711(object):
             else:
                 Mcomp = (1 + DT*self._TRatio) * Mraw +   DT**self._TZero[0]  * self._TZero[1]
         except:
-            self.warning('Could not apply temperature compensation!')
+			e = sys.exc_info()[0]
+            self.warning('Could not apply temperature compensation: ' % e)
             Mcomp = Mraw
             DT = 0.0
 
