@@ -146,7 +146,7 @@ except ValueError as err:
 
 # Calibrate load cell SENSITIVITY:
 try:
-    M_CAL = float(input('Put full PEM cell without connecting the wires and enter weight (grams): '))
+    M_CAL = float(input('Mount full PEM cell without connecting the wires and enter weight (grams): '))
     if M_CAL < 0.0:
          raise ValueError('Full weight must not be negative')
 except ValueError:
