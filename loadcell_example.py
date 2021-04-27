@@ -10,8 +10,8 @@ try:
     LOADCELL = classes.loadcell_HX711.HX711( dout_pin=5,
                                              pd_sck_pin=6,
                                              tempsens_serialport='/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller-if00-port0',
-                                             TZero = [1.18,2.11],
-                                             TRatio = 1.0
+                                             TZero = [1.0,0.0],
+                                             TRatio = 0.0
                                            )
     
     num_readings = 500
