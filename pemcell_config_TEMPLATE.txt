@@ -1,14 +1,16 @@
 [PEMCELLPSU]
 COMPORT = /dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0
-MAXVOLTAGE = 5.0
-MAXCURRENT = 3.5
+MAXVOLTAGE = 7.0
+MAXCURRENT = 5.0
 MINCURRENT = 1.0
-RAMPTIME   = 360
+RAMPTIME   = 1200
 
 [LOADCELL]
 READINGS_AVG = 500
 DOUT_PIN = 5
 SCK_PIN = 6
 TSENS_SERIALPORT = /dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller-if00-port0
-TEMP_ZEROCOMP = [1.18,2.11]
+### TEMP_ZEROCOMP = [1.18,2.11]
+TEMP_ZEROCOMP_0 = 1.0
+TEMP_ZEROCOMP_1 = 0.0
 WATER_TARGET = 20.0
