@@ -4,6 +4,7 @@ cloned from https://github.com/gandalf15/HX711 on 7 Feb 2019
 """
 #!/usr/bin/env python3
 
+import sys
 import statistics as stat
 import time
 import RPi.GPIO as GPIO
@@ -84,7 +85,7 @@ class HX711(object):
         self.set_gain_A(gain_channel_A)
 
         # set up DS18B20 temperature sensor (optional):
-        self._T0 = []
+        self._T0 = None
         self._TZero = TZero
         self._TRatio = TRatio
         if tempsens_serialport:
@@ -147,20 +148,20 @@ class HX711(object):
         return temp
 
 
-    def set_reference_temperature(self,T0=[]):
+    def set_reference_temperature(self,T0=None):
         """
         temperaturesensor_MAXIM.set_reference_temperature(T0)
 
         Set reference temperature (T0) used for temperature compensation (set get_weight_mean_comp).
 
         INPUT:
-        T0: reference temperature (deg.C). If T0 = [], the current temperature of the cell is used. Default: T0 = [].
+        T0: reference temperature (deg.C). If T0 = None, the current temperature of the cell is used. Default: T0 = None.
 
         OUTPUT:
         (none)
         """
 
-        if not T0:
+        if T0 is None:
             T0 = self.get_temperature()
         self._T0 = T0
 
@@ -179,7 +180,7 @@ class HX711(object):
         """
 
         T0 = float(self._T0)
-        if not T0:
+        if T0 is None:
             self.warning('Reference temperature not set.')
         return T0
 
@@ -632,9 +633,8 @@ class HX711(object):
 
             else:
                 Mcomp = (1 + DT*self._TRatio) * Mraw +   DT**self._TZero[0]  * self._TZero[1]
-        except:
-			e = sys.exc_info()[0]
-            self.warning('Could not apply temperature compensation: ' % e)
+        except Exception as e:
+            self.warning('Warning: could not apply temperature compensation: ' + str(e))
             Mcomp = Mraw
             DT = 0.0
 

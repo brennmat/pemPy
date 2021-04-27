@@ -103,9 +103,11 @@ loadcell_num_readings = int(config['LOADCELL']['READINGS_AVG'])
 LOADCELL = classes.loadcell_HX711.HX711( dout_pin=5,
                                              pd_sck_pin=6,
                                              tempsens_serialport=config['LOADCELL']['TSENS_SERIALPORT'],
-                                             TZero = config['LOADCELL']['TEMP_ZEROCOMP'],
+                                             TZero = [ float(config['LOADCELL']['TEMP_ZEROCOMP_0']) , float(config['LOADCELL']['TEMP_ZEROCOMP_1']) ],
                                              TRatio = 1.0
                                            )
+
+LOADCELL.set_reference_temperature() # get current temperature of sensor and use this as reference for T compensation
 
 # ask for sample name:
 samplename = ''
