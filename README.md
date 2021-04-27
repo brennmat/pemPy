@@ -1,5 +1,5 @@
 # pemPy
-Python codey to monitor and control operation of polymer electrolyte membrane (PEM) electrolysis electrolysis cell for 3H enrichment in water.
+Python code to monitor and control operation of polymer electrolyte membrane (PEM) electrolysis cell for 3H enrichment in water.
 
 Hardware:
 - Core unit: Raspberry Pi (RPi)
