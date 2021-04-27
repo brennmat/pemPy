@@ -605,10 +605,12 @@ class HX711(object):
 
         Like get_weight_mean, but also applies temperature compensation if temperature sensor is configured and if reference temperature (T0) is set.
         The procedure is:
-          (1) read weight (Mraw) from load cell using self.get_weight_mean (not compensated)
+          (1) read weight (Mraw) from load cell using self.get_weight_mean_uncompensated (not compensated)
           (2) read temperature (T) of load cell using self.temperature()
           (3) determine temperature offset DT=T-T0 relative to loadcell temperature during last calibration of tare and ratio (T0)
-          (4) calculate compensated weight as follows: Mcomp = (1 + DT*TRatio) x ( M + DT^TZero[0] x TZero[1] )
+          (4) calculate compensated weight as follows: Mcomp = (1 + DT x TRatio) x Mraw + DT^TZero[0] x TZero[1]
+              TRatio coefficient: compensate change of gain ("sensitivity") of the load cell
+              TZero coefficients: compensate change of offset of the load cell
 
         INPUT:
         (see get_weight_mean)
@@ -626,9 +628,10 @@ class HX711(object):
         try:
             DT  = self.get_temperature() - self.get_reference_temperature()
             if DT < 0:
-                Mcomp = (1 + DT*self._TRatio) * ( Mraw - (-DT)**self._TZero[0] * self._TZero[1] )
+                Mcomp = (1 + DT*self._TRatio) * Mraw - (-DT)**self._TZero[0] * self._TZero[1]
+
             else:
-                Mcomp = (1 + DT*self._TRatio)  * ( Mraw + (DT)**self._TZero[0] * self._TZero[1] )
+                Mcomp = (1 + DT*self._TRatio) * Mraw +   DT**self._TZero[0]  * self._TZero[1]
         except:
             self.warning('Could not apply temperature compensation!')
             Mcomp = Mraw
