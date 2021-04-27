@@ -620,7 +620,7 @@ class HX711(object):
         """
 
         # get uncompensated weight reading:
-        Mraw = self.get_weight_mean(readings)
+        Mraw = self.get_weight_mean_uncompensated(readings)
 
         # apply temperature compensation
         try:
@@ -637,11 +637,11 @@ class HX711(object):
         return Mcomp,Mraw,DT
 
 
-    def get_weight_mean(self, readings=30):
+    def get_weight_mean_uncompensated(self, readings=30):
         """
-        get_weight_mean returns average value of readings minus
+        get_weight_mean_uncompensated returns average value of readings minus
         offset divided by scale ratio for a specific channel
-        and gain.
+        and gain, without applying temperature compensation.
 
         Args:
             readings(int): Number of readings for mean
