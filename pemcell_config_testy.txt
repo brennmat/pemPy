@@ -1,0 +1,17 @@
+[PEMCELLPSU]
+TYPE = pps
+COMPORT = /dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0
+MAXVOLTAGE = 7.0
+MAXCURRENT = 5.0
+MINCURRENT = 1.0
+RAMPTIME = 1200
+
+# For RIDEN power supplies, use TYPE = riden and optionally:
+# BAUD = 115200
+# CURRENTMODE = LOW
+
+[LOADCELL]
+READINGS_AVG = 500
+DOUT_PIN = 5
+SCK_PIN = 6
+WATER_TARGET = 20.0
