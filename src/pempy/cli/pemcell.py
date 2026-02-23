@@ -37,6 +37,27 @@ def printit(text, f=None):
     print(text)
 
 
+def _prompt_float(prompt, min_val=None, min_inclusive=True):
+    """Prompt until user enters a valid float. min_val enforces minimum value."""
+    while True:
+        s = input(prompt).strip()
+        if not s:
+            print("Please enter a number (or Ctrl+C to abort).")
+            continue
+        try:
+            val = float(s)
+            if min_val is not None:
+                if min_inclusive and val < min_val:
+                    print(f"Value must be >= {min_val}.")
+                    continue
+                elif not min_inclusive and val <= min_val:
+                    print(f"Value must be > {min_val}.")
+                    continue
+            return val
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Control and monitor H isotope enrichment of water samples with PEM cells"
@@ -77,6 +98,20 @@ def main():
     loadcell_sck = config.getint("LOADCELL", "SCK_PIN", fallback=6)
 
     LOADCELL = HX711(dout_pin=loadcell_dout, pd_sck_pin=loadcell_sck)
+
+    # Early check: load cell must respond before we prompt the user
+    probe_n = 5
+    probe_ok = sum(
+        1 for _ in range(probe_n)
+        if LOADCELL._read() not in (False, 0x7FFFFF, 0x800000)
+    )
+    if probe_ok < probe_n // 2:
+        print(
+            "Error: Load cell not responding. Check that the HX711 is connected "
+            "(DOUT, SCK, VCC, GND) and the load cell is wired to the HX711."
+        )
+        GPIO.cleanup()
+        sys.exit(1)
 
     samplename = ""
     while not samplename:
