@@ -74,6 +74,7 @@ def main():
     args = parser.parse_args()
 
     # Defer RPi-specific imports until after --help (allows CLI to work on non-RPi)
+    import serial
     import RPi.GPIO as GPIO
     from pempy.loadcell import HX711
     from pempy.powersupply import get_powersupply
@@ -89,8 +90,12 @@ def main():
     if not config.has_option("PEMCELLPSU", "TYPE"):
         config.set("PEMCELLPSU", "TYPE", "pps")
 
-    PSU = get_powersupply(config)
-    PSU.output(False)
+    try:
+        PSU = get_powersupply(config)
+        PSU.output(False)
+    except (serial.SerialException, OSError, RuntimeError):
+        print("Error: Power supply not responding. Check that it is connected, powered on, and the correct port is set in the config.")
+        sys.exit(1)
 
     GPIO.setmode(GPIO.BCM)
     loadcell_num_readings = int(config.get("LOADCELL", "READINGS_AVG", fallback="500"))
