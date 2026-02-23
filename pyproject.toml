@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pempy"
+version = "0.2.0"
+description = "PEM electrolysis cell control for tritium enrichment"
+readme = "README.md"
+license = {text = "GPL-3.0-or-later"}
+requires-python = ">=3.8"
+dependencies = [
+    "packaging",
+    "pyserial>=3.0",
+    "termcolor",
+]
+
+[project.optional-dependencies]
+rpi = ["RPi.GPIO"]
+riden = ["minimalmodbus>=2.0"]
+
+[project.scripts]
+pemcell = "pempy.cli.pemcell:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
