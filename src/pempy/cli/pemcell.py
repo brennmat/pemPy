@@ -214,8 +214,8 @@ def main():
     PSU.output(True)
 
     # Electrolysis data: screen header + file header
-    screen_header = "Time(s)    U(V)   I(A)    Q(Ah)   Water(g)   %      ETA"
-    file_header = "datetime\tepoch\tU_V\tI_A\tQ_Ah\twater_g\tpct\ttime_left"
+    screen_header = "datetime             Time(s)    U(V)   I(A)    Q(Ah)   Water(g)   %      ETA"
+    file_header = "datetime\tepoch\tU (V)\tI (A)\tQ (Ah)\twater (g)"
     print(screen_header)
     logfile.write(file_header + "\n")
     logfile.flush()
@@ -258,14 +258,14 @@ def main():
 
             # Screen: update line in place
             pct = MW / MW_ini * 100
-            screen_row = f"{t1-t0:.1f}-{t2-t0:.1f}  {UC:5.2f}  {IC:5.2f}  {Q:8.2E}  {MW:8.1f}  {pct:5.1f}  {tl:.2f}{tl_unit}"
+            now = datetime.datetime.now()
+            dt_str = now.strftime("%Y-%m-%d %H:%M:%S")
+            screen_row = f"{dt_str}  {t1-t0:.1f}-{t2-t0:.1f}  {UC:5.2f}  {IC:5.2f}  {Q:8.2E}  {MW:8.1f}  {pct:5.1f}  {tl:.2f}{tl_unit}"
             print(f"\r{screen_row}   ", end="", flush=True)
 
             # File: append data row (datetime, epoch, values)
-            now = datetime.datetime.now()
             epoch = int(time.time())
-            dt_str = now.strftime("%Y-%m-%d %H:%M:%S")
-            logfile.write(f"{dt_str}\t{epoch}\t{UC:.2f}\t{IC:.2f}\t{Q:.2E}\t{MW:.1f}\t{pct:.1f}\t{tl:.2f}{tl_unit}\n")
+            logfile.write(f"{dt_str}\t{epoch}\t{UC:.2f}\t{IC:.2f}\t{Q:.2E}\t{MW:.1f}\n")
             logfile.flush()
 
             if MW <= MW_target:
