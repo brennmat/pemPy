@@ -11,11 +11,11 @@ Python package to monitor and control PEM (polymer electrolyte membrane) electro
 ## Installation
 
 ```bash
-# With pip (includes RPi.GPIO for Raspberry Pi)
-pip install -e ".[rpi]"
+# With pip
+pip install -e .
 
 # With RIDEN power supply support
-pip install -e ".[rpi,riden]"
+pip install -e ".[riden]"
 
 # With pipx (CLI tool)
 pipx install .
@@ -36,6 +36,30 @@ pipx install .
 - For PPS: set `COMPORT` to the serial device
 - For RIDEN: set `COMPORT`, optional `BAUD`, `CURRENTMODE` (LOW/HIGH)
 - `[LOADCELL]`: `READINGS_AVG`, `DOUT_PIN`, `SCK_PIN`, `WATER_TARGET`
+
+## HX711 Load Cell Wiring
+
+### HX711 ↔ Raspberry Pi (BCM)
+
+| HX711 pin | RPi GPIO (BCM) | Notes |
+|-----------|----------------|-------|
+| VCC | 3.3V or 5V | Pin 1 (3.3V) or 2 (5V) |
+| GND | GND | Pin 6, 9, 14, 20, etc. |
+| DOUT | GPIO 5 | Config: `DOUT_PIN = 5` |
+| SCK | GPIO 6 | Config: `SCK_PIN = 6` |
+
+### Load Cell ↔ HX711
+
+| Load cell wire | HX711 terminal |
+|----------------|----------------|
+| Red (E+) | E+ |
+| Black (E-) | E- |
+| White (A+) | A+ |
+| Green (A-) | A- |
+
+B+ and B- (Channel B) are not used; leave them unconnected.
+
+Wire colors may vary; check the load cell datasheet for E+/E- (excitation) and A+/A- (signal).
 
 ## License
 
