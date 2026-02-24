@@ -8,7 +8,7 @@ try:
     LOADCELL = HX711(dout_pin=5, pd_sck_pin=6)
     num_readings = 500
 
-    input("Put empty PEM cell on the load cell and press Enter")
+    input("Put empty PEM cell on the load cell and press ENTER")
     print("Zeroing load cell...")
     for _ in range(2):
         LOADCELL.zero(20)
@@ -22,7 +22,7 @@ try:
     else:
         print("invalid data", reading)
 
-    known_weight_grams = input("Put calibration weight on PEM cell and enter its weight (g): ")
+    known_weight_grams = input("Put calibration weight on PEM cell and ENTER its weight (g): ")
     try:
         value = float(known_weight_grams)
     except ValueError:
@@ -40,7 +40,7 @@ try:
         raise ValueError("Cannot calculate mean value. Variable reading:", reading)
 
     print("Reading in infinite loop. Press CTRL+C to exit.")
-    input("Press Enter to begin reading")
+    input("Press ENTER to begin reading")
 
     while True:
         M = LOADCELL.get_weight_mean(num_readings)

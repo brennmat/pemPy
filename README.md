@@ -14,9 +14,6 @@ Python package to monitor and control PEM (polymer electrolyte membrane) electro
 # With pip
 pip install -e .
 
-# With RIDEN power supply support
-pip install -e ".[riden]"
-
 # With pipx (CLI tool)
 pipx install .
 ```

@@ -10,14 +10,12 @@ readme = "README.md"
 license = {text = "GPL-3.0-or-later"}
 requires-python = ">=3.8"
 dependencies = [
+    "minimalmodbus>=2.0",
     "packaging",
     "pyserial>=3.0",
     "RPi.GPIO",
     "termcolor",
 ]
-
-[project.optional-dependencies]
-riden = ["minimalmodbus>=2.0"]
 
 [project.scripts]
 pemcell = "pempy.cli.pemcell:main"

@@ -93,7 +93,7 @@ def _prompt_float(prompt, min_val=None, min_inclusive=True):
     while True:
         s = input(prompt).strip()
         if not s:
-            print("Please enter a number (or Ctrl+C to abort).")
+            print("Please ENTER a number (or Ctrl+C to abort).")
             continue
         try:
             val = float(s)
@@ -106,7 +106,7 @@ def _prompt_float(prompt, min_val=None, min_inclusive=True):
                     continue
             return val
         except ValueError:
-            print("Invalid input. Please enter a number.")
+            print("Invalid input. Please ENTER a number.")
 
 
 def main():
@@ -172,7 +172,7 @@ def main():
 
     samplename = ""
     while not samplename:
-        samplename = input("Enter sample name / label: ").strip()
+        samplename = input("ENTER sample name / label: ").strip()
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H.%M.%S")
     logfilename = args.logfile or f"{samplename}_{timestamp}.log"
@@ -185,7 +185,7 @@ def main():
     printit("Sample: " + samplename, logfile)
 
     # Calibrate load cell ZERO
-    input("Remove PEM cell from the load cell and press Enter")
+    input("Remove PEM cell from the load cell and press ENTER")
     print("Zeroing load cell...")
     try:
         err = LOADCELL.zero(loadcell_num_readings)
@@ -201,7 +201,7 @@ def main():
 
     # Calibrate load cell SENSITIVITY
     try:
-        M_CAL = float(input("Mount full PEM cell without connecting the wires and enter weight (grams): "))
+        M_CAL = float(input("Mount full PEM cell without connecting the wires and ENTER weight (grams): "))
         if M_CAL < 0.0:
             raise ValueError("Full weight must not be negative")
     except ValueError as err:
@@ -231,7 +231,7 @@ def main():
         sys.exit(1)
 
     try:
-        MW_ini = float(input("Enter amount of water in PEM cell (grams): "))
+        MW_ini = float(input("ENTER amount of water in PEM cell (grams): "))
         if MW_ini <= 0.0:
             raise ValueError("water weight must be positive")
     except ValueError as err:
@@ -380,7 +380,7 @@ def main():
             u = ""
             print("")
             while u not in ("X", "C"):
-                u = input("Electrolysis paused. Enter C to continue or X to exit: ").upper()
+                u = input("Electrolysis paused. ENTER C to continue or X to exit: ").upper()
 
             print("")
             if u == "X":
