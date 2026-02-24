@@ -209,16 +209,19 @@ def main():
 
     print("")
     printit("Starting electrolysis (press ENTER to pause)...", logfile)
+    print("")
     PSU.voltage(U_max)
     PSU.current(I_min)
     PSU.output(True)
 
     # Electrolysis data: screen header + file header
-    screen_header = "datetime             Time(s)    U(V)   I(A)    Q(Ah)   Water(g)   %      ETA"
-    file_header = "datetime\tepoch\tU (V)\tI (A)\tQ (Ah)\twater (g)"
+    screen_header = "datetime             Run time(s)   U(V)   I(A)    Q(C)    Water(g)   %      Estimated time left"
+    file_header = "datetime\tRun time(s)\tU(V)\tI(A)\tQ(C)\tWater(g)"
     print(screen_header)
     logfile.write(file_header + "\n")
     logfile.flush()
+
+    screen_rows = []  # last 3 data lines for rolling display
 
     BUTTON = []
     threading.Thread(target=wait_ENTER, args=(BUTTON, "Stopping electrolysis..."), daemon=True).start()
@@ -240,7 +243,7 @@ def main():
 
             t2 = time.time()
             tt = tt + (t2 - t1)
-            Q = Q + IC * (t2 - t1) / 3600
+            Q = Q + IC * (t2 - t1)  # Coulombs
 
             if MW < MW_ini:
                 rate = (MW_ini - MW) / tt
@@ -256,16 +259,22 @@ def main():
             else:
                 tl, tl_unit = float("nan"), "?"
 
-            # Screen: update line in place
+            # Screen: show last 3 data lines (rolling)
             pct = MW / MW_ini * 100
             now = datetime.datetime.now()
             dt_str = now.strftime("%Y-%m-%d %H:%M:%S")
-            screen_row = f"{dt_str}  {t1-t0:.1f}-{t2-t0:.1f}  {UC:5.2f}  {IC:5.2f}  {Q:8.2E}  {MW:8.1f}  {pct:5.1f}  {tl:.2f}{tl_unit}"
-            print(f"\r{screen_row}   ", end="", flush=True)
+            run_time = tt - (t2 - t1) / 2  # processing time at center of step (excludes pause)
+            screen_row = f"{dt_str}  {run_time:10.1f}  {UC:5.2f}  {IC:5.2f}  {Q:8.2E}  {MW:8.1f}  {pct:5.1f}  {tl:.2f}{tl_unit}"
+            prev_count = len(screen_rows)
+            screen_rows.append(screen_row)
+            screen_rows = screen_rows[-3:]
+            if prev_count > 0:
+                print(f"\033[{prev_count}A", end="")  # move up to overwrite
+            for row in screen_rows:
+                print(f"\r\033[2K{row}")  # start of line, erase, content
 
-            # File: append data row (datetime, epoch, values)
-            epoch = int(time.time())
-            logfile.write(f"{dt_str}\t{epoch}\t{UC:.2f}\t{IC:.2f}\t{Q:.2E}\t{MW:.1f}\n")
+            # File: append data row (datetime, run_time, values)
+            logfile.write(f"{dt_str}\t{run_time:.1f}\t{UC:.2f}\t{IC:.2f}\t{Q:.2E}\t{MW:.1f}\n")
             logfile.flush()
 
             if MW <= MW_target:
