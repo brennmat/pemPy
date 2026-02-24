@@ -8,14 +8,53 @@ Setup: Raspberry Pi connected to...
 """
 
 import argparse
+import atexit
 import configparser
 import datetime
+import fcntl
 import math
+import os
 import sys
 import threading
 import time
 
 from termcolor import colored
+
+LOCK_FILE_PATH = "/tmp/pemcell.lock"
+_lock_file = None
+
+
+def _acquire_lock():
+    """Acquire exclusive lock; exit with error if another pemcell is running."""
+    global _lock_file
+    try:
+        _lock_file = open(LOCK_FILE_PATH, "w")
+        _lock_file.write(str(os.getpid()))
+        _lock_file.flush()
+        fcntl.flock(_lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except (BlockingIOError, OSError):
+        if _lock_file:
+            _lock_file.close()
+            _lock_file = None
+        print("Error: Another pemcell process is already running (or stale lock).")
+        print(f"  If no other process is running, remove {LOCK_FILE_PATH}")
+        sys.exit(1)
+    atexit.register(_release_lock)
+
+
+def _release_lock():
+    """Release lock and remove lock file."""
+    global _lock_file
+    if _lock_file is None:
+        return
+    try:
+        fcntl.flock(_lock_file.fileno(), fcntl.LOCK_UN)
+        _lock_file.close()
+        if os.path.exists(LOCK_FILE_PATH):
+            os.remove(LOCK_FILE_PATH)
+    except OSError:
+        pass
+    _lock_file = None
 
 wait_ENTER_msg = ""
 
@@ -84,6 +123,8 @@ def main():
         help="Log file path (default: <samplename>_YYYY-MM-DD-HH.MM.SS.log)",
     )
     args = parser.parse_args()
+
+    _acquire_lock()
 
     # Defer RPi-specific imports until after --help (allows CLI to work on non-RPi)
     import serial

@@ -24,7 +24,7 @@ pipx install .
 ## Usage
 
 1. Copy `pemcell_config_TEMPLATE.txt` to `pemcell_config.txt` and edit.
-2. Run:
+2. Run (only one instance at a time; lock file prevents interference):
    ```bash
    pemcell
    # or: python -m pempy.cli.pemcell --config pemcell_config.txt
