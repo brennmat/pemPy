@@ -257,7 +257,15 @@ def main():
                 w = LOADCELL.get_weight_mean(step_weight_readings)
                 if w is not False:
                     weights.append(w)
-                r = PSU.reading()
+                for attempt in range(3):
+                    try:
+                        r = PSU.reading()
+                        break
+                    except serial.SerialTimeoutException:
+                        if attempt == 2:
+                            print("\nError: Power supply not responding (timeout). Check USB connection and try again.")
+                            sys.exit(1)
+                        time.sleep(0.5)
                 t_now = time.time()
                 dt = t_now - t_prev
                 Us.append(r[0])
