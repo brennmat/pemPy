@@ -98,9 +98,9 @@ def main():
         sys.exit(1)
 
     GPIO.setmode(GPIO.BCM)
-    loadcell_num_readings = int(config.get("LOADCELL", "READINGS_AVG", fallback="500"))
-    step_iterations = int(config.get("LOADCELL", "STEP_ITERATIONS", fallback="10"))
-    step_weight_readings = int(config.get("LOADCELL", "STEP_WEIGHT_READINGS", fallback="30"))
+    loadcell_num_readings = int(config.get("LOADCELL", "CALIBRATION_READINGS", fallback="500"))
+    step_iterations = int(config.get("ELECTROLYSIS", "STEP_ITERATIONS", fallback="10"))
+    step_weight_readings = int(config.get("LOADCELL", "STEP_READINGS", fallback="30"))
     loadcell_dout = config.getint("LOADCELL", "DOUT_PIN", fallback=5)
     loadcell_sck = config.getint("LOADCELL", "SCK_PIN", fallback=6)
 
@@ -188,10 +188,10 @@ def main():
         sys.exit(1)
 
     MW_target = float(config.get("LOADCELL", "WATER_TARGET", fallback="20.0"))
-    I_min = float(config.get("PEMCELLPSU", "MINCURRENT", fallback="1.0"))
-    I_max = float(config.get("PEMCELLPSU", "MAXCURRENT", fallback="5.0"))
-    U_max = float(config.get("PEMCELLPSU", "MAXVOLTAGE", fallback="7.0"))
-    T_ramp = float(config.get("PEMCELLPSU", "RAMPTIME", fallback="1200"))
+    I_min = float(config.get("ELECTROLYSIS", "MINCURRENT", fallback="1.0"))
+    I_max = float(config.get("ELECTROLYSIS", "MAXCURRENT", fallback="5.0"))
+    U_max = float(config.get("ELECTROLYSIS", "MAXVOLTAGE", fallback="7.0"))
+    T_ramp = float(config.get("ELECTROLYSIS", "RAMPTIME", fallback="1200"))
 
     printit(f"Max. cell voltage = {U_max} V", logfile)
     printit(f"Min. cell current = {I_min} A", logfile)

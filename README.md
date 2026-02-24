@@ -32,10 +32,9 @@ pipx install .
 
 ## Configuration
 
-- `[PEMCELLPSU] TYPE = pps` or `riden`
-- For PPS: set `COMPORT` to the serial device
-- For RIDEN: set `COMPORT`, optional `BAUD`, `CURRENTMODE` (LOW/HIGH)
-- `[LOADCELL]`: `READINGS_AVG`, `DOUT_PIN`, `SCK_PIN`, `WATER_TARGET`
+- `[PEMCELLPSU]`: `TYPE` = `pps` or `riden`, `COMPORT`; for RIDEN optionally `BAUD`, `CURRENTMODE` (LOW/HIGH)
+- `[LOADCELL]`: `CALIBRATION_READINGS`, `STEP_READINGS`, `DOUT_PIN`, `SCK_PIN`, `WATER_TARGET`
+- `[ELECTROLYSIS]`: `STEP_ITERATIONS`, `MAXVOLTAGE`, `MAXCURRENT`, `MINCURRENT`, `RAMPTIME`
 
 ## HX711 Load Cell Wiring
 
