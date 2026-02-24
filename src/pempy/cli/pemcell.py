@@ -99,6 +99,8 @@ def main():
 
     GPIO.setmode(GPIO.BCM)
     loadcell_num_readings = int(config.get("LOADCELL", "READINGS_AVG", fallback="500"))
+    step_iterations = int(config.get("LOADCELL", "STEP_ITERATIONS", fallback="10"))
+    step_weight_readings = int(config.get("LOADCELL", "STEP_WEIGHT_READINGS", fallback="30"))
     loadcell_dout = config.getint("LOADCELL", "DOUT_PIN", fallback=5)
     loadcell_sck = config.getint("LOADCELL", "SCK_PIN", fallback=6)
 
@@ -197,6 +199,7 @@ def main():
     printit(f"Ramp time = {T_ramp/60} min", logfile)
     printit(f"Processing start = {MW_ini:.1f} g of water", logfile)
     printit(f"Processing target = {MW_target:.1f} g of water", logfile)
+    printit(f"Step iterations = {step_iterations}, weight readings per iteration = {step_weight_readings}", logfile)
 
     input("Ready for electrolysis? Press ENTER to start or CTRL-C to abort...")
 
@@ -232,18 +235,35 @@ def main():
     while do_process:
         if current_on:
             t1 = t2
-            time.sleep(10)
+            weights, Us, Is, dts = [], [], [], []
+            t_prev = time.time()
+            broke_on_button = False
 
-            if BUTTON:
-                current_on = False
-
-            r = PSU.reading()
-            UC, IC = r[0], r[1]
-            MW = MW_ini - (M_FULL - LOADCELL.get_weight_mean(loadcell_num_readings))
+            for _ in range(step_iterations):
+                if BUTTON:
+                    current_on = False
+                    broke_on_button = True
+                    break
+                w = LOADCELL.get_weight_mean(step_weight_readings)
+                if w is not False:
+                    weights.append(w)
+                r = PSU.reading()
+                t_now = time.time()
+                dt = t_now - t_prev
+                Us.append(r[0])
+                Is.append(r[1])
+                dts.append(dt)
+                t_prev = t_now
 
             t2 = time.time()
+            if broke_on_button or not Us or not Is or not weights:
+                continue
+
             tt = tt + (t2 - t1)
-            Q = Q + IC * (t2 - t1)  # Coulombs
+            Q = Q + sum(I_i * dt_i for I_i, dt_i in zip(Is, dts))  # Coulombs
+            UC = sum(Us) / len(Us)
+            IC = sum(Is) / len(Is)
+            MW = MW_ini - (M_FULL - sum(weights) / len(weights))
 
             if MW < MW_ini:
                 rate = (MW_ini - MW) / tt
