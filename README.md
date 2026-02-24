@@ -32,8 +32,8 @@ pipx install .
 
 ## Configuration
 
-- `[PEMCELLPSU]`: `TYPE` = `pps` or `riden`, `COMPORT`; for RIDEN optionally `BAUD`, `CURRENTMODE` (LOW/HIGH)
-- `[LOADCELL]`: `CALIBRATION_READINGS`, `STEP_READINGS`, `DOUT_PIN`, `SCK_PIN`
+- `[PEMCELLPSU]`: `TYPE`, `COMPORT`, `RESET`, `PROM`, `DEBUG`; for RIDEN also `BAUD`, `CURRENTMODE` (all required)
+- `[LOADCELL]`: `AVG_READINGS`, `DOUT_PIN`, `SCK_PIN`
 - `[ELECTROLYSIS]`: `STEP_ITERATIONS`, `WATER_TARGET`, `MAXVOLTAGE`, `MAXCURRENT`, `MINCURRENT`, `RAMPTIME`
 
 ## HX711 Load Cell Wiring

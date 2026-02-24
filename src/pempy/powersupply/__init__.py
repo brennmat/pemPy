@@ -15,29 +15,36 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
+def _require(config, section, key):
+    """Return config value; raise ValueError if section or key is missing."""
+    if not config.has_section(section):
+        raise ValueError(f"Missing config section [{section}]")
+    if not config.has_option(section, key):
+        raise ValueError(f"Missing config [{section}] {key}")
+    return config.get(section, key)
+
+
 def get_powersupply(config):
     """
     Factory: create power supply instance from config parser section.
     Expects config to have [PEMCELLPSU] with TYPE = 'pps' or 'riden'.
+    All required keys must be present; no fallback values.
     """
     section = "PEMCELLPSU"
-    psu_type = config.get(section, "TYPE", fallback="pps").lower()
-    comport = config.get(section, "COMPORT")
+    psu_type = _require(config, section, "TYPE").lower()
+    comport = _require(config, section, "COMPORT")
 
     if psu_type == "pps":
-        return PPS(
-            port=comport,
-            reset=config.getboolean(section, "RESET", fallback=False),
-            prom=config.get(section, "PROM", fallback=None),
-            debug=config.getboolean(section, "DEBUG", fallback=False),
-        )
+        reset = config.getboolean(section, "RESET")
+        prom_raw = _require(config, section, "PROM")
+        prom = prom_raw.strip() or None
+        debug = config.getboolean(section, "DEBUG")
+        return PPS(port=comport, reset=reset, prom=prom, debug=debug)
     elif psu_type == "riden":
         from pempy.powersupply.riden import RIDEN
-        return RIDEN(
-            port=comport,
-            baud=config.getint(section, "BAUD", fallback=115200),
-            currentmode=config.get(section, "CURRENTMODE", fallback="LOW"),
-            debug=config.getboolean(section, "DEBUG", fallback=False),
-        )
+        baud = int(_require(config, section, "BAUD"))
+        currentmode = _require(config, section, "CURRENTMODE")
+        debug = config.getboolean(section, "DEBUG")
+        return RIDEN(port=comport, baud=baud, currentmode=currentmode, debug=debug)
     else:
         raise ValueError(f"Unknown power supply type: {psu_type}")

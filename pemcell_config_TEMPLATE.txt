@@ -1,14 +1,15 @@
 [PEMCELLPSU]
 TYPE = pps
 COMPORT = /dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0
-
-# For RIDEN power supplies, use TYPE = riden and optionally:
-# BAUD = 115200
-# CURRENTMODE = LOW
+RESET = False
+PROM =
+DEBUG = False
+BAUD = 115200
+CURRENTMODE = LOW
+# For RIDEN: set TYPE = riden; BAUD and CURRENTMODE are required.
 
 [LOADCELL]
-CALIBRATION_READINGS = 500
-STEP_READINGS = 30
+AVG_READINGS = 500
 DOUT_PIN = 5
 SCK_PIN = 6
 

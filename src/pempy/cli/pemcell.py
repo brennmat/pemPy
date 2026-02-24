@@ -10,6 +10,7 @@ Setup: Raspberry Pi connected to...
 import argparse
 import configparser
 import datetime
+import math
 import sys
 import threading
 import time
@@ -17,6 +18,17 @@ import time
 from termcolor import colored
 
 wait_ENTER_msg = ""
+
+
+def _require(config, section, key):
+    """Return config value; exit with error if section or key is missing."""
+    if not config.has_section(section):
+        print(f"Error: Missing config section [{section}]")
+        sys.exit(1)
+    if not config.has_option(section, key):
+        print(f"Error: Missing config [{section}] {key}")
+        sys.exit(1)
+    return config.get(section, key)
 
 
 def wait_ENTER(button_list, msg):
@@ -84,25 +96,22 @@ def main():
         print(f"Error: Could not read config file: {args.config}")
         sys.exit(1)
 
-    # Ensure TYPE exists for PSU (default pps)
-    if not config.has_section("PEMCELLPSU"):
-        config.add_section("PEMCELLPSU")
-    if not config.has_option("PEMCELLPSU", "TYPE"):
-        config.set("PEMCELLPSU", "TYPE", "pps")
-
     try:
         PSU = get_powersupply(config)
         PSU.output(False)
+    except ValueError as err:
+        print(f"Error: {err}")
+        sys.exit(1)
     except (serial.SerialException, OSError, RuntimeError):
         print("Error: Power supply not responding. Check that it is connected, powered on, and the correct port is set in the config.")
         sys.exit(1)
 
     GPIO.setmode(GPIO.BCM)
-    loadcell_num_readings = int(config.get("LOADCELL", "CALIBRATION_READINGS", fallback="500"))
-    step_iterations = int(config.get("ELECTROLYSIS", "STEP_ITERATIONS", fallback="10"))
-    step_weight_readings = int(config.get("LOADCELL", "STEP_READINGS", fallback="30"))
-    loadcell_dout = config.getint("LOADCELL", "DOUT_PIN", fallback=5)
-    loadcell_sck = config.getint("LOADCELL", "SCK_PIN", fallback=6)
+    loadcell_num_readings = int(_require(config, "LOADCELL", "AVG_READINGS"))
+    step_iterations = int(_require(config, "ELECTROLYSIS", "STEP_ITERATIONS"))
+    step_weight_readings = math.ceil(loadcell_num_readings / step_iterations)
+    loadcell_dout = int(_require(config, "LOADCELL", "DOUT_PIN"))
+    loadcell_sck = int(_require(config, "LOADCELL", "SCK_PIN"))
 
     LOADCELL = HX711(dout_pin=loadcell_dout, pd_sck_pin=loadcell_sck)
 
@@ -187,11 +196,11 @@ def main():
         print("Invalid input:", err)
         sys.exit(1)
 
-    MW_target = float(config.get("ELECTROLYSIS", "WATER_TARGET", fallback="20.0"))
-    I_min = float(config.get("ELECTROLYSIS", "MINCURRENT", fallback="1.0"))
-    I_max = float(config.get("ELECTROLYSIS", "MAXCURRENT", fallback="5.0"))
-    U_max = float(config.get("ELECTROLYSIS", "MAXVOLTAGE", fallback="7.0"))
-    T_ramp = float(config.get("ELECTROLYSIS", "RAMPTIME", fallback="1200"))
+    MW_target = float(_require(config, "ELECTROLYSIS", "WATER_TARGET"))
+    I_min = float(_require(config, "ELECTROLYSIS", "MINCURRENT"))
+    I_max = float(_require(config, "ELECTROLYSIS", "MAXCURRENT"))
+    U_max = float(_require(config, "ELECTROLYSIS", "MAXVOLTAGE"))
+    T_ramp = float(_require(config, "ELECTROLYSIS", "RAMPTIME"))
 
     printit(f"Max. cell voltage = {U_max} V", logfile)
     printit(f"Min. cell current = {I_min} A", logfile)
