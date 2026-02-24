@@ -41,12 +41,14 @@ pipx install .
 
 ### HX711 ↔ Raspberry Pi (BCM)
 
-| HX711 pin | RPi GPIO (BCM) | Notes |
-|-----------|----------------|-------|
-| VCC | 3.3V or 5V | Pin 1 (3.3V) or 2 (5V) |
-| GND | GND | Pin 6, 9, 14, 20, etc. |
-| DOUT | GPIO 5 | Config: `DOUT_PIN = 5` |
-| SCK | GPIO 6 | Config: `SCK_PIN = 6` |
+| HX711 pin | RPi connection | Physical pin |
+|-----------|----------------|--------------|
+| VCC | 3.3V or 5V | 1 (3.3V) or 2 (5V) |
+| GND | GND | 6, 9, 14, 20, etc. |
+| DOUT | GPIO 5 (BCM) | 29 |
+| SCK | GPIO 6 (BCM) | 31 |
+
+Config: `DOUT_PIN = 5`, `SCK_PIN = 6` (BCM numbering; physical pin 6 is GND, not SCK).
 
 ### Load Cell ↔ HX711
 
