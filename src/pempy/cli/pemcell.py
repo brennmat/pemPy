@@ -187,7 +187,7 @@ def main():
         print("Invalid input:", err)
         sys.exit(1)
 
-    MW_target = float(config.get("LOADCELL", "WATER_TARGET", fallback="20.0"))
+    MW_target = float(config.get("ELECTROLYSIS", "WATER_TARGET", fallback="20.0"))
     I_min = float(config.get("ELECTROLYSIS", "MINCURRENT", fallback="1.0"))
     I_max = float(config.get("ELECTROLYSIS", "MAXCURRENT", fallback="5.0"))
     U_max = float(config.get("ELECTROLYSIS", "MAXVOLTAGE", fallback="7.0"))
