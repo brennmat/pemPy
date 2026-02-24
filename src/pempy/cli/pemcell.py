@@ -213,6 +213,13 @@ def main():
     PSU.current(I_min)
     PSU.output(True)
 
+    # Electrolysis data: screen header + file header
+    screen_header = "Time(s)    U(V)   I(A)    Q(Ah)   Water(g)   %      ETA"
+    file_header = "datetime\tepoch\tU_V\tI_A\tQ_Ah\twater_g\tpct\ttime_left"
+    print(screen_header)
+    logfile.write(file_header + "\n")
+    logfile.flush()
+
     BUTTON = []
     threading.Thread(target=wait_ENTER, args=(BUTTON, "Stopping electrolysis..."), daemon=True).start()
 
@@ -249,17 +256,23 @@ def main():
             else:
                 tl, tl_unit = float("nan"), "?"
 
-            printit(
-                f"{t1-t0:.1f}...{t2-t0:.1f} s:\t cell voltage: {UC:.2f} V\tcell current: {IC:.2f} A\t"
-                f"total charge: {Q:.2E} Ah\tWater left: {MW:.1f} g ({MW/MW_ini*100:.1f}%)\t"
-                f"Time left: {tl:.2f} {tl_unit}",
-                logfile,
-            )
+            # Screen: update line in place
+            pct = MW / MW_ini * 100
+            screen_row = f"{t1-t0:.1f}-{t2-t0:.1f}  {UC:5.2f}  {IC:5.2f}  {Q:8.2E}  {MW:8.1f}  {pct:5.1f}  {tl:.2f}{tl_unit}"
+            print(f"\r{screen_row}   ", end="", flush=True)
+
+            # File: append data row (datetime, epoch, values)
+            now = datetime.datetime.now()
+            epoch = int(time.time())
+            dt_str = now.strftime("%Y-%m-%d %H:%M:%S")
+            logfile.write(f"{dt_str}\t{epoch}\t{UC:.2f}\t{IC:.2f}\t{Q:.2E}\t{MW:.1f}\t{pct:.1f}\t{tl:.2f}{tl_unit}\n")
+            logfile.flush()
 
             if MW <= MW_target:
                 current_on = False
                 global wait_ENTER_msg
                 wait_ENTER_msg = ""
+                print()  # newline to end the data line
                 printit("*** Water mass target reached! Press ENTER...", logfile)
 
             if t2 - t0 < T_ramp:
@@ -272,6 +285,7 @@ def main():
                 I_last = I
 
         else:
+            print()  # newline to end the data line
             printit("Turning off power supply...", logfile)
             PSU.current(0.0)
 
