@@ -81,7 +81,7 @@ def main():
     )
     parser.add_argument(
         "--logfile",
-        help="Log file path (default: pemcell_<samplename>.log)",
+        help="Log file path (default: <samplename>_YYYY-MM-DD-HH.MM.SS.log)",
     )
     args = parser.parse_args()
 
@@ -133,7 +133,8 @@ def main():
     while not samplename:
         samplename = input("Enter sample name / label: ").strip()
 
-    logfilename = args.logfile or f"pemcell_{samplename}.log"
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H.%M.%S")
+    logfilename = args.logfile or f"{samplename}_{timestamp}.log"
     logfile = open(logfilename, "w")
     if not logfile:
         print("Could not open log file!")
