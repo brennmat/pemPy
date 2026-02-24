@@ -29,7 +29,7 @@ pipx install .
 
 ## Configuration
 
-- `[PEMCELLPSU]`: `TYPE`, `COMPORT`, `RESET`, `PROM`, `DEBUG`; for RIDEN also `BAUD`, `CURRENTMODE` (all required)
+- `[PEMCELLPSU]`: `TYPE`, `COMPORT`, `RESET`, `PROM`; for RIDEN also `BAUD`, `CURRENTMODE`; optional `DEBUG` (default False)
 - `[LOADCELL]`: `AVG_READINGS`, `DOUT_PIN`, `SCK_PIN`
 - `[ELECTROLYSIS]`: `STEP_ITERATIONS`, `WATER_TARGET`, `MAXVOLTAGE`, `MAXCURRENT`, `MINCURRENT`, `RAMPTIME`
 

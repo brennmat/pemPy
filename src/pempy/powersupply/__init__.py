@@ -2,6 +2,8 @@
 Power supply drivers for PEM cell control.
 """
 
+import configparser
+
 from pempy.powersupply.base import PowerSupply
 from pempy.powersupply.pps import PPS
 
@@ -30,21 +32,32 @@ def get_powersupply(config):
     Expects config to have [PEMCELLPSU] with TYPE = 'pps' or 'riden'.
     All required keys must be present; no fallback values.
     """
+    try:
+        return _get_powersupply(config)
+    except configparser.NoOptionError as err:
+        raise ValueError(f"Missing config [{err.section}] {err.option}") from err
+    except configparser.NoSectionError as err:
+        raise ValueError(f"Missing config section [{err.section}]") from err
+
+
+def _get_powersupply(config):
     section = "PEMCELLPSU"
     psu_type = _require(config, section, "TYPE").lower()
     comport = _require(config, section, "COMPORT")
 
     if psu_type == "pps":
+        _require(config, section, "RESET")
+        _require(config, section, "PROM")
         reset = config.getboolean(section, "RESET")
-        prom_raw = _require(config, section, "PROM")
+        prom_raw = config.get(section, "PROM")
         prom = prom_raw.strip() or None
-        debug = config.getboolean(section, "DEBUG")
+        debug = config.getboolean(section, "DEBUG", fallback=False)
         return PPS(port=comport, reset=reset, prom=prom, debug=debug)
     elif psu_type == "riden":
         from pempy.powersupply.riden import RIDEN
         baud = int(_require(config, section, "BAUD"))
         currentmode = _require(config, section, "CURRENTMODE")
-        debug = config.getboolean(section, "DEBUG")
+        debug = config.getboolean(section, "DEBUG", fallback=False)
         return RIDEN(port=comport, baud=baud, currentmode=currentmode, debug=debug)
     else:
         raise ValueError(f"Unknown power supply type: {psu_type}")
