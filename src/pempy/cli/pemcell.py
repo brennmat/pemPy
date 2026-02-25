@@ -268,8 +268,8 @@ def main():
     PSU.output(True)
 
     # Electrolysis data: screen header + file header
-    screen_header = "datetime             Run time(s)   U(V)   I(A)    Q(C)    Water(g)   %      Estimated time left"
-    file_header = "datetime\tRun time(s)\tU(V)\tI(A)\tQ(C)\tWater(g)"
+    screen_header = "datetime             Run time(s)   U (V)   I (A)    Q (C)    Water(g)   %      Estimated time left"
+    file_header = "datetime\tRun time(s)\tU (V)\tI (A)\tQ (C)\tWater(g)"
     print(screen_header)
     logfile.write(file_header + "\n")
     logfile.flush()
@@ -342,7 +342,7 @@ def main():
             now = datetime.datetime.now()
             dt_str = now.strftime("%Y-%m-%d %H:%M:%S")
             run_time = tt - (t2 - t1) / 2  # processing time at center of step (excludes pause)
-            screen_row = f"{dt_str}  {run_time:10.1f}  {UC:5.2f}  {IC:5.2f}  {Q:8.2E}  {MW:8.1f}  {pct:5.1f}  {tl:.2f}{tl_unit}"
+            screen_row = f"{dt_str}  {run_time:10.1f}  {UC:6.3f}  {IC:6.3f}  {Q:9.3E}  {MW:8.1f}  {pct:5.1f}  {tl:.2f}{tl_unit}"
             prev_count = len(screen_rows)
             screen_rows.append(screen_row)
             screen_rows = screen_rows[-3:]
@@ -352,7 +352,7 @@ def main():
                 print(f"\r\033[2K{row}")  # start of line, erase, content
 
             # File: append data row (datetime, run_time, values)
-            logfile.write(f"{dt_str}\t{run_time:.1f}\t{UC:.2f}\t{IC:.2f}\t{Q:.2E}\t{MW:.1f}\n")
+            logfile.write(f"{dt_str}\t{run_time:.1f}\t{UC:.3f}\t{IC:.3f}\t{Q:.3E}\t{MW:.1f}\n")
             logfile.flush()
 
             if MW <= MW_target:
