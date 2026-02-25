@@ -203,7 +203,7 @@ def main():
 
     # Calibrate load cell SENSITIVITY
     try:
-        M_CAL = float(input("Mount full PEM cell without connecting the wires and ENTER weight (grams): "))
+        M_CAL = float(input("Mount full PEM cell without connecting the wires and enter weight (grams): "))
         if M_CAL < 0.0:
             raise ValueError("Full weight must not be negative")
     except ValueError as err:
@@ -234,7 +234,7 @@ def main():
         sys.exit(1)
 
     try:
-        MW_ini = float(input("ENTER amount of water in PEM cell (grams): "))
+        MW_ini = float(input("Enter amount of water in PEM cell (grams): "))
         if MW_ini <= 0.0:
             raise ValueError("water weight must be positive")
     except ValueError as err:
