@@ -9,7 +9,8 @@ CURRENTMODE = LOW
 # For RIDEN: set TYPE = riden; BAUD and CURRENTMODE are required.
 
 [LOADCELL]
-AVG_READINGS = 500
+# AVG_READINGS = HX711 readings per step iteration; calibration uses STEP_ITERATIONS * AVG_READINGS
+AVG_READINGS = 50
 DOUT_PIN = 5
 SCK_PIN = 6
 

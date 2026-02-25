@@ -12,7 +12,6 @@ import atexit
 import configparser
 import datetime
 import fcntl
-import math
 import os
 import sys
 import threading
@@ -148,9 +147,9 @@ def main():
         sys.exit(1)
 
     GPIO.setmode(GPIO.BCM)
-    loadcell_num_readings = int(_require(config, "LOADCELL", "AVG_READINGS"))
+    avg_readings = int(_require(config, "LOADCELL", "AVG_READINGS"))
     step_iterations = int(_require(config, "ELECTROLYSIS", "STEP_ITERATIONS"))
-    step_weight_readings = math.ceil(loadcell_num_readings / step_iterations)
+    calibration_readings = step_iterations * avg_readings
     loadcell_dout = int(_require(config, "LOADCELL", "DOUT_PIN"))
     loadcell_sck = int(_require(config, "LOADCELL", "SCK_PIN"))
 
@@ -191,7 +190,7 @@ def main():
         err = LOADCELL.zero(loadcell_num_readings)
         if err:
             raise ValueError(err)
-        reading = LOADCELL.get_raw_data_mean(loadcell_num_readings)
+        reading = LOADCELL.get_raw_data_mean(calibration_readings)
         if reading is False:
             raise ValueError("empty reading")
         print("Load cell zero value (raw value):", reading)
@@ -209,7 +208,7 @@ def main():
         sys.exit(1)
 
     try:
-        reading = LOADCELL.get_data_mean(loadcell_num_readings)
+        reading = LOADCELL.get_data_mean(calibration_readings)
         if reading is False:
             raise ValueError("Could not read load cell data")
         ratio = reading / M_CAL
@@ -222,7 +221,7 @@ def main():
 
     input("Attach wires from PEM and cooler top to power supplies, then press ENTER!")
     try:
-        M_FULL = LOADCELL.get_weight_mean(loadcell_num_readings)
+        M_FULL = LOADCELL.get_weight_mean(calibration_readings)
         if M_FULL is False:
             raise ValueError("could not read load cell")
         print("Full weight with wires connected =", M_FULL, "g")
@@ -250,7 +249,7 @@ def main():
     printit(f"Ramp time = {T_ramp/60} min", logfile)
     printit(f"Processing start = {MW_ini:.1f} g of water", logfile)
     printit(f"Processing target = {MW_target:.1f} g of water", logfile)
-    printit(f"Step iterations = {step_iterations}, weight readings per iteration = {step_weight_readings}", logfile)
+    printit(f"Step iterations = {step_iterations}, AVG_READINGS per iteration = {avg_readings}, calibration readings = {calibration_readings}", logfile)
 
     input("Ready for electrolysis? Press ENTER to start or CTRL-C to abort...")
 
@@ -295,7 +294,7 @@ def main():
                     current_on = False
                     broke_on_button = True
                     break
-                w = LOADCELL.get_weight_mean(step_weight_readings)
+                w = LOADCELL.get_weight_mean(avg_readings)
                 if w is not False:
                     weights.append(w)
                 for attempt in range(3):
