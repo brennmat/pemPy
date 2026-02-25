@@ -212,8 +212,8 @@ def main():
         except ValueError:
             print("Invalid input. Please enter a numeric value.")
             continue
-        if M_CAL < 0.0:
-            print("Weight must not be negative.")
+        if M_CAL <= 0.0:
+            print("Weight must be strictly positive.")
             continue
         break
     print("Calibrating load cell...")
@@ -253,8 +253,8 @@ def main():
         if MW_ini <= 0.0:
             print("Water weight must be positive.")
             continue
-        if MW_ini >= M_FULL:
-            print(f"Water weight must be less than full PEM cell weight ({M_FULL:.1f} g).")
+        if MW_ini >= M_CAL:
+            print(f"Water weight must be less than PEM cell weight ({M_CAL:.1f} g).")
             continue
         break
 
