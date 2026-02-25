@@ -13,8 +13,8 @@ import configparser
 import datetime
 import fcntl
 import os
+import select
 import sys
-import threading
 import time
 
 from termcolor import colored
@@ -55,9 +55,6 @@ def _release_lock():
         pass
     _lock_file = None
 
-wait_ENTER_msg = ""
-
-
 def _require(config, section, key):
     """Return config value; exit with error if section or key is missing."""
     if not config.has_section(section):
@@ -67,15 +64,6 @@ def _require(config, section, key):
         print(f"Error: Missing config [{section}] {key}")
         sys.exit(1)
     return config.get(section, key)
-
-
-def wait_ENTER(button_list, msg):
-    global wait_ENTER_msg
-    wait_ENTER_msg = msg
-    input()
-    if wait_ENTER_msg:
-        print(colored(wait_ENTER_msg + "\n", "red"))
-    button_list.append(None)
 
 
 def printit(text, f=None):
@@ -291,9 +279,6 @@ def main():
 
     screen_rows = []  # last 3 data lines for rolling display
 
-    BUTTON = []
-    threading.Thread(target=wait_ENTER, args=(BUTTON, "Stopping electrolysis..."), daemon=True).start()
-
     do_process = True
     current_on = True
     target_reached = False
@@ -306,7 +291,9 @@ def main():
             broke_on_button = False
 
             for _ in range(step_iterations):
-                if BUTTON:
+                if select.select([sys.stdin], [], [], 0)[0]:
+                    sys.stdin.readline()
+                    print(colored("Stopping electrolysis...\n", "red"))
                     current_on = False
                     broke_on_button = True
                     break
@@ -374,8 +361,6 @@ def main():
             if MW <= MW_target:
                 current_on = False
                 target_reached = True
-                global wait_ENTER_msg
-                wait_ENTER_msg = ""
                 print()  # newline to end the data line
                 printit("Water mass target reached.", None)
 
@@ -410,12 +395,6 @@ def main():
                     current_on = True
                     I_last = I
                     t2 = time.time()
-                    BUTTON.clear()
-                    threading.Thread(
-                        target=wait_ENTER,
-                        args=(BUTTON, "Stopping electrolysis..."),
-                        daemon=True,
-                    ).start()
 
     PSU.output(False)
     printit("Done.", None)
