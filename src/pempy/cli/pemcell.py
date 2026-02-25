@@ -139,6 +139,14 @@ def main():
     try:
         PSU = get_powersupply(config)
         PSU.output(False)
+
+        def _shutdown_psu():
+            try:
+                PSU.output(False)
+            except Exception:
+                pass
+
+        atexit.register(_shutdown_psu)
     except ValueError as err:
         print(f"Error: {err}")
         sys.exit(1)
@@ -147,6 +155,14 @@ def main():
         sys.exit(1)
 
     GPIO.setmode(GPIO.BCM)
+
+    def _cleanup_gpio():
+        try:
+            GPIO.cleanup()
+        except Exception:
+            pass
+
+    atexit.register(_cleanup_gpio)
     avg_readings = int(_require(config, "LOADCELL", "AVG_READINGS"))
     step_iterations = int(_require(config, "ELECTROLYSIS", "STEP_ITERATIONS"))
     calibration_readings = step_iterations * avg_readings
