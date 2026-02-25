@@ -400,6 +400,7 @@ def main():
     PSU.output(False)
     GPIO.cleanup()
     printit("Done.", logfile)
+    input("Electrolysis finished. Press ENTER to exit.")
 
 
 if __name__ == "__main__":
