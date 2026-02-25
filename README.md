@@ -11,11 +11,7 @@ Python package to monitor and control PEM (polymer electrolyte membrane) electro
 ## Installation
 
 ```bash
-# With pip
-pip install -e .
-
-# With pipx (CLI tool)
-pipx install .
+pipx install git+https://github.com/brennmat/pemPy.git
 ```
 
 ## Usage
