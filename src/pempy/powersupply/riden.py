@@ -4,10 +4,10 @@ See https://github.com/ShayBox/Riden for Modbus register details.
 """
 
 import logging
-import sys
 import time
 
 import minimalmodbus
+import serial
 
 from pempy.powersupply.base import PowerSupply
 
@@ -25,11 +25,6 @@ RIDEN_SPECS = {
 MAX_COMM_ATTEMPTS = 10
 
 
-def _riden_debug(s):
-    sys.stdout.write(s)
-    sys.stdout.flush()
-
-
 class RIDEN(PowerSupply):
     """
     RIDEN (RUIDEN) RDxxxx power supply.
@@ -38,15 +33,13 @@ class RIDEN(PowerSupply):
     currentmode: 'LOW' or 'HIGH' for 6012P
     """
 
-    def __init__(self, port, baud=115200, currentmode="LOW", debug=False):
-        self._debug = bool(debug)
-
+    def __init__(self, port, baud=115200, currentmode="LOW"):
         try:
             self._instrument = minimalmodbus.Instrument(port=port, slaveaddress=1)
             self._instrument.serial.baudrate = baud
             self._instrument.serial.timeout = 1.0
             time.sleep(0.2)
-        except Exception as e:
+        except (OSError, RuntimeError, serial.SerialException) as e:
             raise RuntimeError(f"Could not connect to RIDEN powersupply at {port}: {e}") from e
 
         OCP_max = OVP_max = None
@@ -100,7 +93,7 @@ class RIDEN(PowerSupply):
 
         except KeyError as e:
             raise RuntimeError(f"Unknown RIDEN type/model {getattr(self, 'MODEL', '?')}") from e
-        except Exception as e:
+        except (OSError, RuntimeError, serial.SerialException) as e:
             raise RuntimeError(f"Could not determine RIDEN type/model: {e}") from e
 
         if OCP_max is not None and OVP_max is not None:
@@ -116,7 +109,7 @@ class RIDEN(PowerSupply):
             try:
                 self._instrument.write_register(register, int(value))
                 return
-            except Exception:
+            except (OSError, RuntimeError, serial.SerialException):
                 pass
         raise RuntimeError(
             f"Communication with RIDEN {self.MODEL} at {self._instrument.serial.port} failed"
@@ -126,7 +119,7 @@ class RIDEN(PowerSupply):
         for _ in range(MAX_COMM_ATTEMPTS):
             try:
                 return self._instrument.read_register(register)
-            except Exception:
+            except (OSError, RuntimeError, serial.SerialException):
                 pass
         raise RuntimeError(
             f"Communication with RIDEN {self.MODEL} at {self._instrument.serial.port} failed"
@@ -136,7 +129,7 @@ class RIDEN(PowerSupply):
         for _ in range(MAX_COMM_ATTEMPTS):
             try:
                 return self._instrument.read_registers(register_start, N)
-            except Exception:
+            except (OSError, RuntimeError, serial.SerialException):
                 pass
         raise RuntimeError(
             f"Communication with RIDEN {self.MODEL} at {self._instrument.serial.port} failed"

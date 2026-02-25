@@ -53,6 +53,7 @@ def _release_lock():
         pass
     _lock_file = None
 
+
 def _require(config, section, key):
     """Return config value; exit with error if section or key is missing."""
     if not config.has_section(section):
@@ -71,27 +72,6 @@ def printit(text, f=None):
         print(text, file=f)
         f.flush()
     print(text)
-
-
-def _prompt_float(prompt, min_val=None, min_inclusive=True):
-    """Prompt until user enters a valid float. min_val enforces minimum value."""
-    while True:
-        s = input(prompt).strip()
-        if not s:
-            print("Please enter a number (or Ctrl+C to abort).")
-            continue
-        try:
-            val = float(s)
-            if min_val is not None:
-                if min_inclusive and val < min_val:
-                    print(f"Value must be >= {min_val}.")
-                    continue
-                elif not min_inclusive and val <= min_val:
-                    print(f"Value must be > {min_val}.")
-                    continue
-            return val
-        except ValueError:
-            print("Invalid input. Please enter a number.")
 
 
 def main():
@@ -129,7 +109,7 @@ def main():
         def _shutdown_psu():
             try:
                 PSU.output(False)
-            except Exception:
+            except (OSError, serial.SerialException, RuntimeError):
                 pass
 
         atexit.register(_shutdown_psu)
@@ -145,7 +125,7 @@ def main():
     def _cleanup_gpio():
         try:
             GPIO.cleanup()
-        except Exception:
+        except (OSError, RuntimeError):
             pass
 
     atexit.register(_cleanup_gpio)
@@ -177,9 +157,7 @@ def main():
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H.%M.%S")
     logfilename = args.logfile or f"{samplename}_{timestamp}.log"
     logfile = open(logfilename, "w")
-    if not logfile:
-        print("Could not open log file!")
-        sys.exit(1)
+    atexit.register(logfile.close)
     print(f"\nLogging output to {logfilename}...\n")
 
     printit("Sample: " + samplename)
@@ -193,7 +171,7 @@ def main():
             raise ValueError(err)
         reading = LOADCELL.get_raw_data_mean(calibration_readings)
         if reading is False:
-            raise ValueError("empty reading")
+            raise ValueError("Load cell returned no data during zero calibration")
         print("Load cell zero value (raw value):", reading)
     except (ValueError, TypeError) as err:
         print("Could not determine load cell ZERO:", err)
@@ -218,7 +196,7 @@ def main():
     try:
         reading = LOADCELL.get_data_mean(calibration_readings)
         if reading is False:
-            raise ValueError("Could not read load cell data")
+            raise ValueError("Load cell returned no data during sensitivity calibration")
         ratio = reading / M_CAL
         print("calibrated ratio =", ratio, "g/raw-units")
         LOADCELL.set_scale_ratio(ratio)
@@ -261,6 +239,16 @@ def main():
     I_max = float(_require(config, "ELECTROLYSIS", "MAXCURRENT"))
     U_max = float(_require(config, "ELECTROLYSIS", "MAXVOLTAGE"))
     T_ramp = float(_require(config, "ELECTROLYSIS", "RAMPTIME"))
+
+    if I_min >= I_max:
+        print("Error: MINCURRENT must be less than MAXCURRENT.")
+        sys.exit(1)
+    if MW_target >= MW_ini:
+        print("Error: WATER_TARGET must be less than water weight in PEM cell.")
+        sys.exit(1)
+    if T_ramp <= 0:
+        print("Error: RAMPTIME must be positive.")
+        sys.exit(1)
 
     printit(f"Min. cell current = {I_min} A")
     printit(f"Max. cell current = {I_max} A")
@@ -308,14 +296,19 @@ def main():
             broke_on_button = False
 
             for _ in range(step_iterations):
-                if select.select([sys.stdin], [], [], 0)[0]:
-                    sys.stdin.readline()
-                    current_on = False
-                    broke_on_button = True
-                    break
+                if sys.stdin.isatty():
+                    try:
+                        if select.select([sys.stdin], [], [], 0)[0]:
+                            sys.stdin.readline()
+                            current_on = False
+                            broke_on_button = True
+                            break
+                    except OSError:
+                        pass
                 w = LOADCELL.get_weight_mean(avg_readings)
                 if w is not False:
                     weights.append(w)
+                r = None
                 for attempt in range(3):
                     try:
                         r = PSU.reading()
@@ -323,8 +316,11 @@ def main():
                     except serial.SerialTimeoutException:
                         if attempt == 2:
                             print("\nError: Power supply not responding (timeout). Check USB connection and try again.")
+                            print("Retry in a few seconds.")
                             sys.exit(1)
                         time.sleep(0.5)
+                if r is None:
+                    continue
                 t_now = time.time()
                 dt = t_now - t_prev
                 Us.append(r[0])
@@ -379,7 +375,7 @@ def main():
                     current_on = False
                     target_reached = True
                     print()  # newline to end the data line
-                    printit("Water mass target reached.", None)
+                    printit("Water mass target reached.")
                 # else: treat as fluke (>1g from previous), keep iterating
             MW_prev = MW
 
@@ -416,7 +412,7 @@ def main():
                     t2 = time.time()
 
     PSU.output(False)
-    printit("Done.", None)
+    printit("Done.")
     print("\nElectrolysis finished. Press ENTER to exit.")
     input()
 

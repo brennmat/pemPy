@@ -57,7 +57,6 @@ def _get_powersupply(config):
         from pempy.powersupply.riden import RIDEN
         baud = int(_require(config, section, "BAUD"))
         currentmode = _require(config, section, "CURRENTMODE")
-        debug = config.getboolean(section, "DEBUG", fallback=False)
-        return RIDEN(port=comport, baud=baud, currentmode=currentmode, debug=debug)
+        return RIDEN(port=comport, baud=baud, currentmode=currentmode)
     else:
         raise ValueError(f"Unknown power supply type: {psu_type}")

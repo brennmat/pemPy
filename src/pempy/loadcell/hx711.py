@@ -6,8 +6,6 @@ Cloned from https://github.com/gandalf15/HX711
 import statistics as stat
 import time
 
-from termcolor import colored
-
 try:
     import RPi.GPIO as GPIO
 except ImportError:
@@ -56,10 +54,6 @@ class HX711:
         GPIO.setup(self._dout, GPIO.IN)
         self.select_channel(select_channel)
         self.set_gain_A(gain_channel_A)
-
-    def warning(self, msg):
-        print("\a")
-        print(colored(f"***** WARNING from loadcell: {msg}\n", "red"))
 
     def select_channel(self, channel):
         channel = channel.capitalize()

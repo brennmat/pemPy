@@ -14,11 +14,13 @@ dependencies = [
     "packaging",
     "pyserial>=3.0",
     "RPi.GPIO",
-    "termcolor",
 ]
 
 [project.scripts]
 pemcell = "pempy.cli.pemcell:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
