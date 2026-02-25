@@ -182,7 +182,6 @@ def main():
             "Error: Load cell not responding. Check that the HX711 is connected "
             "(DOUT, SCK, VCC, GND) and the load cell is wired to the HX711."
         )
-        GPIO.cleanup()
         sys.exit(1)
 
     samplename = ""
@@ -419,9 +418,9 @@ def main():
                     ).start()
 
     PSU.output(False)
-    GPIO.cleanup()
-    printit("Done.")
-    input("Electrolysis finished. Press ENTER to exit.")
+    printit("Done.", None)
+    print("\nElectrolysis finished. Press ENTER to exit.")
+    input()
 
 
 if __name__ == "__main__":
