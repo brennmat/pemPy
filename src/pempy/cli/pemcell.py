@@ -187,7 +187,7 @@ def main():
     input("Remove PEM cell from the load cell and press ENTER")
     print("Zeroing load cell...")
     try:
-        err = LOADCELL.zero(loadcell_num_readings)
+        err = LOADCELL.zero(calibration_readings)
         if err:
             raise ValueError(err)
         reading = LOADCELL.get_raw_data_mean(calibration_readings)
