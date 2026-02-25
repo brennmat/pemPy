@@ -22,7 +22,7 @@ try:
     else:
         print("invalid data", reading)
 
-    known_weight_grams = input("Put calibration weight on PEM cell and ENTER its weight (g): ")
+    known_weight_grams = input("Put calibration weight on PEM cell and enter its weight (g): ")
     try:
         value = float(known_weight_grams)
     except ValueError:

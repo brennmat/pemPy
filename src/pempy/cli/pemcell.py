@@ -80,7 +80,7 @@ def _prompt_float(prompt, min_val=None, min_inclusive=True):
     while True:
         s = input(prompt).strip()
         if not s:
-            print("Please ENTER a number (or Ctrl+C to abort).")
+            print("Please enter a number (or Ctrl+C to abort).")
             continue
         try:
             val = float(s)
@@ -93,7 +93,7 @@ def _prompt_float(prompt, min_val=None, min_inclusive=True):
                     continue
             return val
         except ValueError:
-            print("Invalid input. Please ENTER a number.")
+            print("Invalid input. Please enter a number.")
 
 
 def main():
@@ -174,7 +174,7 @@ def main():
 
     samplename = ""
     while not samplename:
-        samplename = input("ENTER sample name / label: ").strip()
+        samplename = input("Enter sample name / label: ").strip()
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H.%M.%S")
     logfilename = args.logfile or f"{samplename}_{timestamp}.log"
@@ -202,13 +202,20 @@ def main():
         sys.exit(1)
 
     # Calibrate load cell SENSITIVITY
-    try:
-        M_CAL = float(input("Mount full PEM cell without connecting the wires and enter weight (grams): "))
+    while True:
+        s = input("Mount full PEM cell without connecting the wires and enter weight (grams): ").strip()
+        if not s:
+            print("Please enter a number.")
+            continue
+        try:
+            M_CAL = float(s)
+        except ValueError:
+            print("Invalid input. Please enter a numeric value.")
+            continue
         if M_CAL < 0.0:
-            raise ValueError("Full weight must not be negative")
-    except ValueError as err:
-        print("Invalid input:", err)
-        sys.exit(1)
+            print("Weight must not be negative.")
+            continue
+        break
     print("Calibrating load cell...")
     try:
         reading = LOADCELL.get_data_mean(calibration_readings)
@@ -233,13 +240,23 @@ def main():
         print("Could not determine full weight with PSU wires connected:", err)
         sys.exit(1)
 
-    try:
-        MW_ini = float(input("Enter amount of water in PEM cell (grams): "))
+    while True:
+        s = input("Enter amount of water in PEM cell (grams): ").strip()
+        if not s:
+            print("Please enter a number.")
+            continue
+        try:
+            MW_ini = float(s)
+        except ValueError:
+            print("Invalid input. Please enter a numeric value.")
+            continue
         if MW_ini <= 0.0:
-            raise ValueError("water weight must be positive")
-    except ValueError as err:
-        print("Invalid input:", err)
-        sys.exit(1)
+            print("Water weight must be positive.")
+            continue
+        if MW_ini >= M_FULL:
+            print(f"Water weight must be less than full PEM cell weight ({M_FULL:.1f} g).")
+            continue
+        break
 
     MW_target = float(_require(config, "ELECTROLYSIS", "WATER_TARGET"))
     I_min = float(_require(config, "ELECTROLYSIS", "MINCURRENT"))
@@ -385,7 +402,7 @@ def main():
                 u = ""
                 print("")
                 while u not in ("X", "C"):
-                    u = input("Electrolysis paused. ENTER C to continue or X to exit: ").upper()
+                    u = input("Electrolysis paused. Enter C to continue or X to exit: ").upper()
 
                 print("")
                 if u == "X":
