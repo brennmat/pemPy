@@ -298,6 +298,7 @@ def main():
     do_process = True
     current_on = True
     target_reached = False
+    MW_prev = None
 
     while do_process:
         if current_on:
@@ -374,10 +375,13 @@ def main():
             logfile.flush()
 
             if MW <= MW_target:
-                current_on = False
-                target_reached = True
-                print()  # newline to end the data line
-                printit("Water mass target reached.", None)
+                if MW_prev is not None and MW_prev - MW < 1.0:
+                    current_on = False
+                    target_reached = True
+                    print()  # newline to end the data line
+                    printit("Water mass target reached.", None)
+                # else: treat as fluke (>1g from previous), keep iterating
+            MW_prev = MW
 
             if t2 - t0 < T_ramp:
                 I = I_min + (I_max - I_min) * (t2 - t0) / T_ramp
