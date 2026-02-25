@@ -209,7 +209,7 @@ def main():
     except ValueError as err:
         print("Invalid input:", err)
         sys.exit(1)
-
+    print("Calibrating load cell...")
     try:
         reading = LOADCELL.get_data_mean(calibration_readings)
         if reading is False:
@@ -223,6 +223,7 @@ def main():
         sys.exit(1)
 
     input("Attach wires from PEM and cooler top to power supplies, then press ENTER!")
+    print("Reading weight with wires...")
     try:
         M_FULL = LOADCELL.get_weight_mean(calibration_readings)
         if M_FULL is False:
