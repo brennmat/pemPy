@@ -80,8 +80,8 @@ def main():
     )
     parser.add_argument(
         "--config",
-        default="pemcell_config.txt",
-        help="Configuration file path (default: pemcell_config.txt)",
+        default=os.path.expanduser("~/pemcell_config.txt"),
+        help="Configuration file path (default: ~/pemcell_config.txt)",
     )
     parser.add_argument(
         "--logfile",
