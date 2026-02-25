@@ -5,8 +5,6 @@
 TYPE = riden
 # Serial port:
 COMPORT = /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
-# Serial port data rate (Riden only):
-BAUD = 115200
 # Current mode (Riden only, HIGH or LOW):
 CURRENTMODE = HIGH
 

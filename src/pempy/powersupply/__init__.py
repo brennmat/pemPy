@@ -51,12 +51,10 @@ def _get_powersupply(config):
         reset = config.getboolean(section, "RESET")
         prom_raw = config.get(section, "PROM")
         prom = prom_raw.strip() or None
-        debug = config.getboolean(section, "DEBUG", fallback=False)
-        return PPS(port=comport, reset=reset, prom=prom, debug=debug)
+        return PPS(port=comport, reset=reset, prom=prom)
     elif psu_type == "riden":
         from pempy.powersupply.riden import RIDEN
-        baud = int(_require(config, section, "BAUD"))
         currentmode = _require(config, section, "CURRENTMODE")
-        return RIDEN(port=comport, baud=baud, currentmode=currentmode)
+        return RIDEN(port=comport, currentmode=currentmode)
     else:
         raise ValueError(f"Unknown power supply type: {psu_type}")

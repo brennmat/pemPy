@@ -20,16 +20,17 @@ pipx install .
 
 ## Usage
 
-1. Copy `pemcell_config_TEMPLATE.txt` to `pemcell_config.txt` and edit.
+1. Copy `pemcell_config_EXAMPLE.txt` to `~/pemcell_config.txt` and edit.
 2. Run (only one instance at a time; lock file prevents interference):
    ```bash
    pemcell
-   # or: python -m pempy.cli.pemcell --config pemcell_config.txt
+   # or: python -m pempy.cli.pemcell
+   # use --config /path/to/config.txt for a different config file
    ```
 
 ## Configuration
 
-- `[PEMCELLPSU]`: `TYPE`, `COMPORT`, `RESET`, `PROM`; for RIDEN also `BAUD`, `CURRENTMODE`; optional `DEBUG` (default False)
+- `[PEMCELLPSU]`: `TYPE`, `COMPORT`, `RESET`, `PROM`; for RIDEN also `CURRENTMODE` (baud fixed at 115200)
 - `[LOADCELL]`: `AVG_READINGS` (per step iteration; calibration uses STEP_ITERATIONS × AVG_READINGS), `DOUT_PIN`, `SCK_PIN`
 - `[ELECTROLYSIS]`: `STEP_ITERATIONS`, `WATER_TARGET`, `MAXVOLTAGE`, `MAXCURRENT`, `MINCURRENT`, `RAMPTIME`
 

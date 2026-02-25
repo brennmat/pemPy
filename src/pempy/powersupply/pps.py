@@ -2,7 +2,6 @@
 Voltcraft PPS power supply driver.
 """
 
-import sys
 import serial
 
 from pempy.powersupply.base import PowerSupply
@@ -33,7 +32,7 @@ class PPS(PowerSupply):
     prom: preset number 0,1,2 to load on init (or None)
     """
 
-    def __init__(self, port="/dev/ttyUSB0", reset=False, prom=None, debug=False):
+    def __init__(self, port="/dev/ttyUSB0", reset=False, prom=None):
         try:
             from packaging.version import Version
             use_exclusive = Version(serial.__version__) >= Version("3.3")
@@ -47,7 +46,6 @@ class PPS(PowerSupply):
 
         self._Serial.flushInput()
         self._Serial.flushOutput()
-        self._debug = bool(debug)
 
         try:
             model = self.limits()
@@ -71,24 +69,16 @@ class PPS(PowerSupply):
     MODEL = property(lambda self: self._MODEL, None, None, "PS model number")
 
     def _query(self, cmd):
-        if self._debug:
-            _pps_debug(f"PPS <- {cmd}<CR>\n")
         self._Serial.write((cmd + "\r").encode())
 
         b = []
-        if self._debug:
-            _pps_debug("PPS -> ")
         while True:
             ch = self._Serial.read(1).decode("utf-8")
             b.append(ch)
-            if self._debug:
-                _pps_debug(ch.replace("\r", "<CR>"))
             if ch == "":
                 raise serial.SerialTimeoutException()
             if b[-3:] == list("OK\r"):
                 break
-        if self._debug:
-            _pps_debug("\n")
         return "".join(b[:-4])
 
     def limits(self):
