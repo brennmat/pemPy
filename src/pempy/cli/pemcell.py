@@ -197,7 +197,7 @@ def main():
         sys.exit(1)
     print(f"\nLogging output to {logfilename}...\n")
 
-    printit("Sample: " + samplename, logfile)
+    printit("Sample: " + samplename)
 
     # Calibrate load cell ZERO
     input("Remove PEM cell from the load cell and press ENTER")
@@ -259,13 +259,13 @@ def main():
     U_max = float(_require(config, "ELECTROLYSIS", "MAXVOLTAGE"))
     T_ramp = float(_require(config, "ELECTROLYSIS", "RAMPTIME"))
 
-    printit(f"Max. cell voltage = {U_max} V", logfile)
-    printit(f"Min. cell current = {I_min} A", logfile)
-    printit(f"Max. cell current = {I_max} A", logfile)
-    printit(f"Ramp time = {T_ramp/60} min", logfile)
-    printit(f"Processing start = {MW_ini:.1f} g of water", logfile)
-    printit(f"Processing target = {MW_target:.1f} g of water", logfile)
-    printit(f"Step iterations = {step_iterations}, AVG_READINGS per iteration = {avg_readings}, calibration readings = {calibration_readings}", logfile)
+    printit(f"Max. cell voltage = {U_max} V")
+    printit(f"Min. cell current = {I_min} A")
+    printit(f"Max. cell current = {I_max} A")
+    printit(f"Ramp time = {T_ramp/60} min")
+    printit(f"Processing start = {MW_ini:.1f} g of water")
+    printit(f"Processing target = {MW_target:.1f} g of water")
+    printit(f"Step iterations = {step_iterations}, AVG_READINGS per iteration = {avg_readings}, calibration readings = {calibration_readings}")
 
     input("Ready for electrolysis? Press ENTER to start or CTRL-C to abort...")
 
@@ -277,7 +277,7 @@ def main():
     tt = 0
 
     print("")
-    printit("Starting electrolysis (press ENTER to pause)...", None)
+    printit("Starting electrolysis (press ENTER to pause)...")
     print("")
     PSU.voltage(U_max)
     PSU.current(I_min)
@@ -297,6 +297,7 @@ def main():
 
     do_process = True
     current_on = True
+    target_reached = False
 
     while do_process:
         if current_on:
@@ -373,10 +374,11 @@ def main():
 
             if MW <= MW_target:
                 current_on = False
+                target_reached = True
                 global wait_ENTER_msg
                 wait_ENTER_msg = ""
                 print()  # newline to end the data line
-                printit("*** Water mass target reached! Press ENTER...", logfile)
+                printit("Water mass target reached.", None)
 
             if t2 - t0 < T_ramp:
                 I = I_min + (I_max - I_min) * (t2 - t0) / T_ramp
@@ -389,33 +391,36 @@ def main():
 
         else:
             print()  # newline to end the data line
-            printit("Turning off power supply...", logfile)
             PSU.current(0.0)
 
-            u = ""
-            print("")
-            while u not in ("X", "C"):
-                u = input("Electrolysis paused. ENTER C to continue or X to exit: ").upper()
-
-            print("")
-            if u == "X":
+            if target_reached:
                 do_process = False
             else:
-                printit("Turning on power supply...", logfile)
-                PSU.current(I)
-                current_on = True
-                I_last = I
-                t2 = time.time()
-                BUTTON.clear()
-                threading.Thread(
-                    target=wait_ENTER,
-                    args=(BUTTON, "Stopping electrolysis..."),
-                    daemon=True,
-                ).start()
+                printit("Turning off power supply...")
+                u = ""
+                print("")
+                while u not in ("X", "C"):
+                    u = input("Electrolysis paused. ENTER C to continue or X to exit: ").upper()
+
+                print("")
+                if u == "X":
+                    do_process = False
+                else:
+                    printit("Turning on power supply...")
+                    PSU.current(I)
+                    current_on = True
+                    I_last = I
+                    t2 = time.time()
+                    BUTTON.clear()
+                    threading.Thread(
+                        target=wait_ENTER,
+                        args=(BUTTON, "Stopping electrolysis..."),
+                        daemon=True,
+                    ).start()
 
     PSU.output(False)
     GPIO.cleanup()
-    printit("Done.", logfile)
+    printit("Done.")
     input("Electrolysis finished. Press ENTER to exit.")
 
 
