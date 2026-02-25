@@ -24,10 +24,10 @@ WATER_TARGET = 20.0
 # Number of iterations per time step (number of voltage, current and weight readings):
 STEP_ITERATIONS = 10
 # Time to ramp up current at start (seconds):
-RAMPTIME = 1200
+RAMPTIME = 60
 # Target current at start (A):
-MINCURRENT = 1.0
+MINCURRENT =0.1
 # Target current after ramp up (A):
-MAXCURRENT = 5.0
+MAXCURRENT = 1.5
 # Voltage limit (V):
 MAXVOLTAGE = 7.0
