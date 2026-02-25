@@ -261,7 +261,7 @@ def main():
     tt = 0
 
     print("")
-    printit("Starting electrolysis (press ENTER to pause)...", logfile)
+    printit("Starting electrolysis (press ENTER to pause)...", None)
     print("")
     PSU.voltage(U_max)
     PSU.current(I_min)
