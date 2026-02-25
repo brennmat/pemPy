@@ -17,8 +17,6 @@ import select
 import sys
 import time
 
-from termcolor import colored
-
 LOCK_FILE_PATH = "/tmp/pemcell.lock"
 _lock_file = None
 
@@ -264,10 +262,10 @@ def main():
     U_max = float(_require(config, "ELECTROLYSIS", "MAXVOLTAGE"))
     T_ramp = float(_require(config, "ELECTROLYSIS", "RAMPTIME"))
 
-    printit(f"Max. cell voltage = {U_max} V")
     printit(f"Min. cell current = {I_min} A")
     printit(f"Max. cell current = {I_max} A")
     printit(f"Ramp time = {T_ramp/60} min")
+    printit(f"Max. cell voltage = {U_max} V")
     printit(f"Processing start = {MW_ini:.1f} g of water")
     printit(f"Processing target = {MW_target:.1f} g of water")
     printit(f"Step iterations = {step_iterations}, AVG_READINGS per iteration = {avg_readings}, calibration readings = {calibration_readings}")
@@ -311,7 +309,6 @@ def main():
             for _ in range(step_iterations):
                 if select.select([sys.stdin], [], [], 0)[0]:
                     sys.stdin.readline()
-                    print(colored("Stopping electrolysis...\n", "red"))
                     current_on = False
                     broke_on_button = True
                     break
