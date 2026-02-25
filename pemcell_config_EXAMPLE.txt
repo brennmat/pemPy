@@ -10,7 +10,7 @@ CURRENTMODE = HIGH
 
 [LOADCELL]
 # number of readings for averaging into a single value:
-AVG_READINGS = 10
+AVG_READINGS = 20
 # GPIO pin for DOUT:
 DOUT_PIN = 5
 # GPIO pin for SCK:
@@ -22,10 +22,10 @@ WATER_TARGET = 20.0
 # Number of iterations per time step (number of voltage, current and weight readings):
 STEP_ITERATIONS = 10
 # Time to ramp up current at start (seconds):
-RAMPTIME = 60
+RAMPTIME = 1200
 # Target current at start (A):
-MINCURRENT =0.1
+MINCURRENT = 1.0
 # Target current after ramp up (A):
-MAXCURRENT = 1.5
+MAXCURRENT = 5.0
 # Voltage limit (V):
 MAXVOLTAGE = 7.0
