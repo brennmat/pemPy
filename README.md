@@ -11,8 +11,9 @@ Python package to monitor and control PEM (polymer electrolyte membrane) electro
 ## Installation
 
 ```bash
-pipx install git+https://github.com/brennmat/pemPy.git
+pipx install --global git+https://github.com/brennmat/pemPy.git
 ```
+The `--global` tag ensures the `pemcell` command is available system wide, not just the current user.
 
 ## Usage
 
