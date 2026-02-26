@@ -9,11 +9,14 @@ Python package to monitor and control PEM (polymer electrolyte membrane) electro
 - **Load cell**: HX711 ADC for PEM weight/mass monitoring
 
 ## Installation
-
+For use as local user only:
+```bash
+pipx install git+https://github.com/brennmat/pemPy.git
+```
+For system-wide use:
 ```bash
 pipx install --global git+https://github.com/brennmat/pemPy.git
 ```
-The `--global` tag ensures the `pemcell` command is available system wide, not just the current user.
 
 ## Usage
 
