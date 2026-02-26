@@ -9,24 +9,39 @@ Python package to monitor and control PEM (polymer electrolyte membrane) electro
 - **Load cell**: HX711 ADC for PEM weight/mass monitoring
 
 ## Installation
-For use as local user only:
-```bash
-pipx install git+https://github.com/brennmat/pemPy.git
-```
-For system-wide use:
-```bash
-pipx install --global git+https://github.com/brennmat/pemPy.git
-```
+
+1. Install with pipx. For local user only:
+   ```bash
+   pipx install git+https://github.com/brennmat/pemPy.git
+   ```
+   For system-wide use:
+   ```bash
+   pipx install --global git+https://github.com/brennmat/pemPy.git
+   ```
+
+2. Copy `pemcell_config_EXAMPLE.txt` to `~/pemcell_config.txt` and edit.
 
 ## Usage
 
-1. Copy `pemcell_config_EXAMPLE.txt` to `~/pemcell_config.txt` and edit.
-2. Run (only one instance at a time; lock file prevents interference):
-   ```bash
-   pemcell
-   # or: python -m pempy.cli.pemcell
-   # use --config /path/to/config.txt for a different config file
-   ```
+1. Prepare the PEM cell:
+   - Make sure PEM cell is dry; record the empty weight of the dry cell
+   - Close outlet valve and fill water sample into the cell (up to 2 L)
+   - Make sure the PEM cell is dry on the outside; record the weight of the full cell
+   - Determine the water weight from the difference of the full weight and empty weight
+
+2. Run:
+   - Log in to Raspberry Pi controlling the PEM cell
+   - Run `screen -R` to start (or re-attach to) a persistent terminal session that keeps running even if the shell connection drops
+   - Run `pemcell`
+
+3. Follow the interactive prompts:
+   - **Enter sample name** — Label for this run
+   - **Zero load cell** — Remove PEM cell from load cell, press ENTER
+   - **Calibrate load cell** — Install full PEM cell (without wires) with known weight; enter weight in grams
+   - **Attach wires** — Connect wires from PEM and cooler top to power supplies; press ENTER so wire weight is included in process control
+   - **Enter water amount** — Grams of water in PEM cell
+   - **Start** — Press ENTER to begin electrolysis
+   - **Electrolysis** — Runs until water target weight is reached. Log file name is shown on screen; process information is displayed on screen, and saved to the log file. Press ENTER to pause (or stop) the electrolysis.
 
 ## Configuration
 
