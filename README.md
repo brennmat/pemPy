@@ -21,6 +21,75 @@ Python package to monitor and control PEM (polymer electrolyte membrane) electro
 
 2. Copy `pemcell_config_EXAMPLE.txt` to `~/pemcell_config.txt` and edit.
 
+## Remote access
+
+The Raspberry Pis are headless and are accessed from a central laptop. Hostnames follow the pattern `pem-<name>`.
+
+### `pem` shell function
+
+Add this function to `~/.bashrc` on the central laptop:
+
+```bash
+pem() {
+    if [ -z "$1" ]; then
+        echo "Usage: pem <name>"
+        return 1
+    fi
+
+    ssh -t "pem-$1" 'screen -xRR'
+}
+```
+
+Then, for example:
+
+```bash
+pem miso
+pem noodle
+pem chicken
+```
+
+connect to `pem-miso`, `pem-noodle`, and `pem-chicken`, respectively.
+
+The command connects via SSH and runs `screen -xRR` on the remote machine, attaching to an existing screen session where possible or creating one if necessary.
+
+After editing `~/.bashrc`, load the configuration with:
+
+```bash
+source ~/.bashrc
+```
+
+### Passwordless SSH using SSH keys
+
+Configure SSH-key authentication from the central laptop to each Raspberry Pi.
+
+First check for an existing public key:
+
+```bash
+ls ~/.ssh/id_*.pub
+```
+
+If no suitable key exists, create an Ed25519 key:
+
+```bash
+ssh-keygen -t ed25519
+```
+
+Then install the public key on each Raspberry Pi, for example:
+
+```bash
+ssh-copy-id pem-miso
+ssh-copy-id pem-noodle
+ssh-copy-id pem-chicken
+```
+
+The remote account password must normally be entered once during `ssh-copy-id`. Afterwards, verify that:
+
+```bash
+ssh pem-miso
+```
+
+works without asking for the remote account password. The `pem` command should then also work without a password prompt.
+
 ## Usage
 
 1. Prepare the PEM cell:
@@ -30,8 +99,7 @@ Python package to monitor and control PEM (polymer electrolyte membrane) electro
    - Determine the water weight from the difference of the full weight and empty weight
 
 2. Run:
-   - Log in to Raspberry Pi controlling the PEM cell
-   - Run `screen -R` to start (or re-attach to) a persistent terminal session that keeps running even if the shell connection drops
+   - From the central laptop, log in with `pem <name>` (see Remote access). This attaches to a persistent screen session on the Raspberry Pi so `pemcell` keeps running if the connection drops.
    - Run `pemcell`
 
 3. Follow the interactive prompts:
