@@ -121,8 +121,8 @@ works without asking for the remote account password. The `pem` command should t
 
 ### HX711 ↔ Raspberry Pi (BCM)
 
-| HX711 pin | RPi connection | Physical pin |
-|-----------|----------------|--------------|
+| HX711 pin | RPi connection | Physical pin on RPi |
+|-----------|----------------|---------------------|
 | VCC | 3.3V or 5V | 1 (3.3V) or 2 (5V) |
 | GND | GND | 6, 9, 14, 20, etc. |
 | DOUT | GPIO 5 (BCM) | 29 |
