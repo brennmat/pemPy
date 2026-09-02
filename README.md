@@ -14,9 +14,13 @@ Python package to monitor and control PEM (polymer electrolyte membrane) electro
    ```bash
    pipx install git+https://github.com/brennmat/pemPy.git
    ```
-   For system-wide use:
+   For system-wide use (pipx 1.5.0+; `--global` is not in older distro packages):
    ```bash
-   pipx install --global git+https://github.com/brennmat/pemPy.git
+   sudo pipx install --global git+https://github.com/brennmat/pemPy.git
+   ```
+   On older pipx, set the install locations instead:
+   ```bash
+   sudo PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install git+https://github.com/brennmat/pemPy.git
    ```
 
 2. Copy `pemcell_config_EXAMPLE.txt` to `~/pemcell_config.txt` and edit.
